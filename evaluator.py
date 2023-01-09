@@ -18,6 +18,7 @@ def read_dataset(dataname):
     return dataset
 
 
+
 def semdist(ref, hyp, memory):
     model = memory
     ref_projection = model.encode(ref).reshape(1, -1)
@@ -25,38 +26,83 @@ def semdist(ref, hyp, memory):
     score = cosine_similarity(ref_projection, hyp_projection)[0][0]
     return (1-score)*100 # lower is better
 
-    
 
+"""
+def semdist_flaubert(ref, hyp, memory):
+    flaubert_tokenizer, flaubert = memory
+    ref_projection = flaubert(torch.tensor([flaubert_tokenizer.encode(ref)]))[0][0].detach().numpy() #.reshape(1, -1)
+    hyp_projection = flaubert(torch.tensor([flaubert_tokenizer.encode(hyp)]))[0][0].detach().numpy() #.reshape(1, -1)
+    score = cosine_similarity(ref_projection, hyp_projection)[0][0]
+    
+    return (1-score)*100 # lower is better
+"""
+
+"""
 def ember(ref, hyp, memory):
-    tok2emb, threshold = memory
+    tok2emb, threshold, weight = memory
     
     erreurs = []
     ref = ref.split(" ")
     hyp = hyp.split(" ")
     list = awer.wer(ref, hyp)[0]
     # list = ['s', 'e', 'e', 's', 'e', 'i']
+    ri = 0 # indice for ref
+    hi = 0
     for i in range(len(list)):
         element = list[i]
         if element == 's':
             # compute cosine similarity
             try:
-                sim = 1 - spatial.distance.cosine(tok2emb[ref[i]], tok2emb[h[i]])
+                sim = 1 - spatial.distance.cosine(tok2emb[ref[ri]], tok2emb[hyp[hi]])
             except KeyError:
-                sim = 0
+                sim = 0 # one of words do not exist in the vocabulary
+            ri += 1
+            hi += 1
             # threshold check
             if sim > threshold:
-                erreurs.append(0.1)
+                erreurs.append(weight)
             else:
                 erreurs.append(1)
         elif element != "e":
             erreurs.append(1)
+            if element == "d":
+                ri += 1
+            elif element == "i":
+                hi += 1
+            else:
+                print("ERREUR, element == " + element)
+                exit(-1)
         else:
             erreurs.append(0)
+            ri += 1
+            hi += 1
     return sum(erreurs)/len(ref)
+"""
 
+"""
+def wer_(ref, hyp, memory):
+    return wer(ref, hyp)
+"""
+
+"""
+def cer_(ref, hyp, memory):
+    return cer(ref, hyp)
+"""
+
+"""
+def bertscore(ref, hyp, memory):
+    scorer = memory
+    P, R, F1 = scorer.score([hyp], [ref])
+    return 100-F1*100
+"""
 
 def custom_metric(ref, hyp, memory):
     return semdist(ref, hyp, memory)
+    # return ember(ref, hyp, memory)
+    # return semdist_flaubert(ref, hyp, memory)
+    # return wer_(ref, hyp, memory)
+    # return cer_(ref, hyp, memory)
+    # return bertscore(ref, hyp, memory)
 
 def evaluator(metric, dataset, memory, certitude=0.3, verbose=True):
     ignored = 0
@@ -76,7 +122,7 @@ def evaluator(metric, dataset, memory, certitude=0.3, verbose=True):
         except ZeroDivisionError:
             ignored += 1
             continue
-        if c <= certitude or c >= 1-certitude: # if humans are certain about choice
+        if (c <= certitude or c >= 1-certitude) and nbrA+nbrB >= 5: # if humans are certain about choice
             accepted += 1
             scoreA = metric(dataset[i]["reference"], dataset[i]["hypA"], memory=memory)
             scoreB = metric(dataset[i]["reference"], dataset[i]["hypB"], memory=memory)
@@ -88,12 +134,12 @@ def evaluator(metric, dataset, memory, certitude=0.3, verbose=True):
         else:
             ignored += 1
 
-    print("ratio correct:", correct/(correct+incorrect)*100)
-    print("correct:", correct)
-    print("incorrect:", incorrect)
+    print(" ratio correct:", correct/(correct+incorrect)*100)
+    # print("correct:", correct)
+    # print("incorrect:", incorrect)
     print("ratio ignored:", ignored/(ignored+accepted)*100)
-    print("ignored:", ignored)
-    print("accepted:", accepted)
+    # print("ignored:", ignored)
+    # print("accepted:", accepted)
 
     # 0-7 ; 1-6 ; 2-5 ; 3-4 ;
     # 0%  ; 14% ; 29% ; 43%
@@ -113,17 +159,45 @@ if __name__ == '__main__':
     print("Importing...")
 
     # semdist
-    """
     from sentence_transformers import SentenceTransformer
     from sklearn.metrics.pairwise import cosine_similarity
     print("Loading model...")
-    model = SentenceTransformer('sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2')
-    memory=model
+    # model = SentenceTransformer('sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2')
+    # model = SentenceTransformer('dangvantuan/sentence-camembert-large')
+    # model = SentenceTransformer('dangvantuan/sentence-camembert-base')
+    # model = SentenceTransformer('distiluse-base-multilingual-cased')
+    # model = SentenceTransformer('bert-base-nli-mean-tokens')
+    # model = SentenceTransformer('paraphrase-MiniLM-L6-v2')
+    # model = SentenceTransformer('all-mpnet-base-v2')
+    # model = SentenceTransformer('multi-qa-mpnet-base-dot-v1')
+    # model = SentenceTransformer('all-distilroberta-v1')
+    model = SentenceTransformer('all-MiniLM-L12-v2')
+    """
+    model = SentenceTransformer('multi-qa-MiniLM-L6-cos-v1')
+    model = SentenceTransformer('paraphrase-multilingual-mpnet-base-v2')
+    model = SentenceTransformer('paraphrase-multilingual-MiniLM-L12-v2')
     """
 
+    memory=model
+
+    # semdist flaubert
+    """
+    import torch
+    from transformers import FlaubertModel, FlaubertTokenizer
+    from sklearn.metrics.pairwise import cosine_similarity
+    # modelname = 'flaubert/flaubert_base_cased'
+    modelname = 'flaubert/flaubert_large_cased'
+    flaubert, log = FlaubertModel.from_pretrained(modelname, output_loading_info=True)
+    flaubert_tokenizer = FlaubertTokenizer.from_pretrained(modelname, do_lowercase=True)
+    memory=(flaubert_tokenizer, flaubert)
+    """
+
+
     # ember
+    """
     from scipy import spatial
-    import aligned_wer as awer
+    import utils.aligned_wer as awer
+    import numpy as np
     vocabulary = set()
     for d in dataset:
         for element in ["reference", "hypA", "hypB"]:
@@ -144,10 +218,34 @@ if __name__ == '__main__':
             else:
                 tok2emb[ligne[0]] = emb
     print("Embeddings loaded.")
+    memory=(tok2emb, 0.3, 0.4)
+    """
 
+    # wer
+    """
+    from jiwer import wer
+    memory = 0
+    """
+
+    # cer
+    """
+    from jiwer import cer
+    memory = 0
+    """
+
+    # bertscore
+    """
+    from bert_score import BERTScorer
+    # memory = BERTScorer(lang="fr")
+    # memory = BERTScorer(model_type="amazon/bort")
+    # memory = BERTScorer(model_type="distilbert-base-multilingual-cased")
+    memory = BERTScorer(model_type="microsoft/deberta-xlarge-mnli")
+    """
 
     # evaluation of metric
     print("Evaluation...")
-    evaluator(custom_metric, dataset, memory=(tok2emb, 0), certitude=0)
-    evaluator(custom_metric, dataset, memory=(tok2emb, 0), certitude=0.3)
-    evaluator(custom_metric, dataset, memory=(tok2emb, 0), certitude=0.5)
+    
+    evaluator(custom_metric, dataset, memory=memory, certitude=0)
+    evaluator(custom_metric, dataset, memory=memory, certitude=0.3)
+    
+    # mettre ce foutu code en propre en rangeant ce qui n'est pas métrique dans utils
