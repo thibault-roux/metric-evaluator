@@ -171,12 +171,10 @@ if __name__ == '__main__':
     # model = SentenceTransformer('all-mpnet-base-v2')
     # model = SentenceTransformer('multi-qa-mpnet-base-dot-v1')
     # model = SentenceTransformer('all-distilroberta-v1')
-    model = SentenceTransformer('all-MiniLM-L12-v2')
-    """
-    model = SentenceTransformer('multi-qa-MiniLM-L6-cos-v1')
-    model = SentenceTransformer('paraphrase-multilingual-mpnet-base-v2')
+    # model = SentenceTransformer('all-MiniLM-L12-v2')
+    # model = SentenceTransformer('multi-qa-MiniLM-L6-cos-v1')
+    # model = SentenceTransformer('paraphrase-multilingual-mpnet-base-v2')
     model = SentenceTransformer('paraphrase-multilingual-MiniLM-L12-v2')
-    """
 
     memory=model
 
