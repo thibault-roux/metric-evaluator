@@ -19,13 +19,14 @@ def read_dataset(dataname):
 
 
 
+"""
 def semdist(ref, hyp, memory):
     model = memory
     ref_projection = model.encode(ref).reshape(1, -1)
     hyp_projection = model.encode(hyp).reshape(1, -1)
     score = cosine_similarity(ref_projection, hyp_projection)[0][0]
     return (1-score)*100 # lower is better
-
+"""
 
 """
 def semdist_flaubert(ref, hyp, memory):
@@ -36,6 +37,33 @@ def semdist_flaubert(ref, hyp, memory):
     
     return (1-score)*100 # lower is better
 """
+
+def semdist_camembert(ref, hyp, memory):
+    camembert_tokenizer, camembert, layer = memory
+
+    encoded_ref = torch.tensor(camembert_tokenizer.encode(camembert_tokenizer.tokenize(ref))).unsqueeze(0)
+    encoded_hyp = torch.tensor(camembert_tokenizer.encode(camembert_tokenizer.tokenize(hyp))).unsqueeze(0)
+    _, _, all_layer_embeddings_ref = camembert(encoded_ref)
+    _, _, all_layer_embeddings_hyp = camembert(encoded_hyp)
+    ref_projection = all_layer_embeddings_ref[layer][0].detach().numpy()
+    hyp_projection = all_layer_embeddings_hyp[layer][0].detach().numpy()
+    score = cosine_similarity(ref_projection, hyp_projection)[0][0]
+
+    """
+    print()
+    encoded_sentence = torch.tensor(camembert_tokenizer.encode(camembert_tokenizer.tokenize(ref))).unsqueeze(0)
+    embeddings, _, all_layer_embeddings = camembert(encoded_sentence)
+    print(embeddings.shape)
+    print(len(all_layer_embeddings))
+    print(all_layer_embeddings[0].shape)
+    while True:
+        print()
+        #x = int(input("x = "))
+        y = int(input("y = "))
+        print(cosine_similarity(embeddings[0].detach().numpy(), all_layer_embeddings[y][0].detach().numpy())[0][0])
+    """
+    
+    return (1-score)*100 # lower is better
 
 """
 def ember(ref, hyp, memory):
@@ -97,9 +125,10 @@ def bertscore(ref, hyp, memory):
 """
 
 def custom_metric(ref, hyp, memory):
-    return semdist(ref, hyp, memory)
+    # return semdist(ref, hyp, memory)
     # return ember(ref, hyp, memory)
     # return semdist_flaubert(ref, hyp, memory)
+    return semdist_camembert(ref, hyp, memory)
     # return wer_(ref, hyp, memory)
     # return cer_(ref, hyp, memory)
     # return bertscore(ref, hyp, memory)
@@ -130,11 +159,19 @@ def evaluator(metric, dataset, memory, certitude=0.3, verbose=True):
                 correct += 1
             else:
                 incorrect += 1
+            """print()
+            print("ref:", dataset[i]["reference"])
+            print("hypA:", dataset[i]["hypA"])
+            print("human:", nbrA, "metric:", scoreA)
+            print("hypB:", dataset[i]["hypB"])
+            print("human:", nbrB, "metric:", scoreB)
+            input()"""
             continue
         else:
             ignored += 1
 
-    print(" ratio correct:", correct/(correct+incorrect)*100)
+    print()
+    print("ratio correct:", correct/(correct+incorrect)*100)
     # print("correct:", correct)
     # print("incorrect:", incorrect)
     print("ratio ignored:", ignored/(ignored+accepted)*100)
@@ -150,6 +187,8 @@ def evaluator(metric, dataset, memory, certitude=0.3, verbose=True):
     # 0-5 ; 1-4 ; 2-3
     # 0%  ; 25% ; 33%
 
+    return correct/(correct+incorrect)*100
+
 
 if __name__ == '__main__':
     print("Reading dataset...")
@@ -159,10 +198,11 @@ if __name__ == '__main__':
     print("Importing...")
 
     # semdist
+    """
     from sentence_transformers import SentenceTransformer
     from sklearn.metrics.pairwise import cosine_similarity
     print("Loading model...")
-    # model = SentenceTransformer('sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2')
+    model = SentenceTransformer('sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2')
     # model = SentenceTransformer('dangvantuan/sentence-camembert-large')
     # model = SentenceTransformer('dangvantuan/sentence-camembert-base')
     # model = SentenceTransformer('distiluse-base-multilingual-cased')
@@ -174,9 +214,9 @@ if __name__ == '__main__':
     # model = SentenceTransformer('all-MiniLM-L12-v2')
     # model = SentenceTransformer('multi-qa-MiniLM-L6-cos-v1')
     # model = SentenceTransformer('paraphrase-multilingual-mpnet-base-v2')
-    model = SentenceTransformer('paraphrase-multilingual-MiniLM-L12-v2')
-
+    # model = SentenceTransformer('paraphrase-multilingual-MiniLM-L12-v2')
     memory=model
+    """
 
     # semdist flaubert
     """
@@ -189,6 +229,26 @@ if __name__ == '__main__':
     flaubert_tokenizer = FlaubertTokenizer.from_pretrained(modelname, do_lowercase=True)
     memory=(flaubert_tokenizer, flaubert)
     """
+
+    # semdist camembert
+    import torch
+    from transformers import CamembertModel, CamembertTokenizer
+    from transformers import CamembertConfig # added
+    from sklearn.metrics.pairwise import cosine_similarity
+    modelname = 'camembert-base'
+    # modelname = 'camembert/camembert_large'
+    config = CamembertConfig.from_pretrained(modelname, output_hidden_states=True, return_dict=False) # added
+    camembert = CamembertModel.from_pretrained(modelname, config=config) # added
+    #camembert, log = CamembertModel.from_pretrained(modelname, output_loading_info=True) # deleted
+    camembert_tokenizer = CamembertTokenizer.from_pretrained(modelname, do_lowercase=True)
+    memory=(camembert_tokenizer, camembert)
+    
+    print("Evaluation...")
+    for i in range(5, 13):
+        print("layer:", i)
+        evaluator(custom_metric, dataset, memory=(camembert_tokenizer, camembert, i), certitude=0)
+        evaluator(custom_metric, dataset, memory=(camembert_tokenizer, camembert, i), certitude=0.3)
+    exit(-1)
 
 
     # ember
@@ -225,7 +285,7 @@ if __name__ == '__main__':
     memory = 0
     """
 
-    # cer
+     # cer
     """
     from jiwer import cer
     memory = 0
