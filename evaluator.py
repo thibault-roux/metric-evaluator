@@ -347,18 +347,28 @@ if __name__ == '__main__':
     # bertscore
     from bert_score import BERTScorer
 
+    # BS
     memory = BERTScorer(lang="fr")
     x_score = evaluator(wer, dataset, memory=memory, certitude=cert_X)
     y_score = evaluator(wer, dataset, memory=memory, certitude=cert_Y)
-    write("cer", x_score, y_score)
+    write("BS", x_score, y_score)
 
-    # memory = BERTScorer(model_type="amazon/bort")
-    # memory = BERTScorer(model_type="distilbert-base-multilingual-cased")
-    # memory = BERTScorer(model_type="microsoft/deberta-xlarge-mnli")
+    # BS_camembert-base
+    memory = BERTScorer(model_type="camembert-base", num_layers=13)
+    x_score = evaluator(wer, dataset, memory=memory, certitude=cert_X)
+    y_score = evaluator(wer, dataset, memory=memory, certitude=cert_Y)
+    write("BS_camembert-base", x_score, y_score)
+
+    # BS_camembert-large
+    memory = BERTScorer(model_type="camembert/camembert-large", num_layers=24)
+    x_score = evaluator(wer, dataset, memory=memory, certitude=cert_X)
+    y_score = evaluator(wer, dataset, memory=memory, certitude=cert_Y)
+    write("BS_camembert-large", x_score, y_score)
 
     # evaluation of metric
     print("Evaluation...")
     
+    """
     evaluator(custom_metric, dataset, memory=memory, certitude=cert_X)
     evaluator(custom_metric, dataset, memory=memory, certitude=cert_Y)
-    
+    """
