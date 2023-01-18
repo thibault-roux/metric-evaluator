@@ -1,5 +1,9 @@
 import progressbar
 
+def custom_metric(ref, hyp, memory=0):
+    # compute a score given a textual reference and hypothesis
+    # write your own metric here
+    return score # lower-is-better rule
 
 def read_dataset(dataname):
     # dataset = [{"reference": ref, "hypA": hypA, "nbrA": nbrA, "hypB": hypB, "nbrB": nbrB}, ...]
@@ -16,10 +20,6 @@ def read_dataset(dataname):
             dictionary["nbrB"] = int(line[4])
             dataset.append(dictionary)
     return dataset
-
-def custom_metric(ref, hyp, memory=0):
-    # compute a score given a textual reference and hypothesis
-    return score
 
 def evaluator(metric, dataset, memory, certitude=0.3, verbose=True):
     ignored = 0
@@ -63,5 +63,5 @@ if __name__ == '__main__':
     cert_X = 1
     cert_Y = 0.7
 
-    x_score = evaluator(custom_metric, dataset, memory=memory, certitude=cert_X)
+    x_score = evaluator(custom_metric, dataset, memory=memory, certitude=cert_X) # certitude is useful to filter utterances where humans are unsure
     y_score = evaluator(custom_metric, dataset, memory=memory, certitude=cert_Y)
