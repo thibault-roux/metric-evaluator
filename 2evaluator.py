@@ -18,6 +18,7 @@ def read_dataset(dataname):
     return dataset
 
 
+
 """
 def semdist(ref, hyp, memory):
     model = memory
@@ -28,14 +29,28 @@ def semdist(ref, hyp, memory):
 """
 
 """
-def semdist_bert(ref, hyp, memory):
-    tokenizer, bert = memory
-    ref_projection = bert(torch.tensor([tokenizer.encode(ref)]))[0][0].detach().numpy() #.reshape(1, -1)
-    hyp_projection = bert(torch.tensor([tokenizer.encode(hyp)]))[0][0].detach().numpy() #.reshape(1, -1)
+def semdist_flaubert(ref, hyp, memory):
+    flaubert_tokenizer, flaubert = memory
+    ref_projection = flaubert(torch.tensor([flaubert_tokenizer.encode(ref)]))[0][0].detach().numpy() #.reshape(1, -1)
+    hyp_projection = flaubert(torch.tensor([flaubert_tokenizer.encode(hyp)]))[0][0].detach().numpy() #.reshape(1, -1)
     score = cosine_similarity(ref_projection, hyp_projection)[0][0]
     
     return (1-score)*100 # lower is better
 """
+
+
+def semdist_camembert(ref, hyp, memory):
+    camembert_tokenizer, camembert, layer = memory
+
+    encoded_ref = torch.tensor(camembert_tokenizer.encode(camembert_tokenizer.tokenize(ref))).unsqueeze(0)
+    encoded_hyp = torch.tensor(camembert_tokenizer.encode(camembert_tokenizer.tokenize(hyp))).unsqueeze(0)
+    _, _, all_layer_embeddings_ref = camembert(encoded_ref)
+    _, _, all_layer_embeddings_hyp = camembert(encoded_hyp)
+    ref_projection = all_layer_embeddings_ref[layer][0].detach().numpy()
+    hyp_projection = all_layer_embeddings_hyp[layer][0].detach().numpy()
+    score = cosine_similarity(ref_projection, hyp_projection)[0][0]
+    return (1-score)*100 # lower is better
+
 
 """
 def ember(ref, hyp, memory):
@@ -96,34 +111,14 @@ def bertscore(ref, hyp, memory):
     return 100-F1*100
 """
 
-def character_bert(ref, hyp, memory):
-    tokenizer, indexer, model = memory
-
-    reference = ref # reference embeddings computation
-    reference = ['[CLS]', *reference, '[SEP]']
-    batch = [reference]
-    batch_ids = indexer.as_padded_tensor(batch)
-    embeddings_for_batch, _ = model(batch_ids)
-    embeddings_for_ref = embeddings_for_batch[0]
-
-    hypothesis = hyp # hypothesis embeddings computation
-    hypothesis = ['[CLS]', *hypothesis, '[SEP]']
-    batch = [hypothesis]
-    batch_ids = indexer.as_padded_tensor(batch)
-    embeddings_for_batch, _ = model(batch_ids)
-    embeddings_for_hyp = embeddings_for_batch[0]
-
-    score = cosine_similarity(embeddings_for_ref[0].detach().reshape(1, -1), embeddings_for_hyp[-1].detach().reshape(1, -1))[0][0]
-    return score
-
 def custom_metric(ref, hyp, memory):
     # return semdist(ref, hyp, memory)
     # return ember(ref, hyp, memory)
-    # return semdist_bert(ref, hyp, memory) # FlauBERT & CamemBERT
+    # return semdist_flaubert(ref, hyp, memory)
+    return semdist_camembert(ref, hyp, memory)
     # return wer_(ref, hyp, memory)
     # return cer_(ref, hyp, memory)
     # return bertscore(ref, hyp, memory)
-    return character_bert(ref, hyp, memory)
 
 def evaluator(metric, dataset, memory, certitude=0.3, verbose=True):
     ignored = 0
@@ -151,11 +146,19 @@ def evaluator(metric, dataset, memory, certitude=0.3, verbose=True):
                 correct += 1
             else:
                 incorrect += 1
+            """print()
+            print("ref:", dataset[i]["reference"])
+            print("hypA:", dataset[i]["hypA"])
+            print("human:", nbrA, "metric:", scoreA)
+            print("hypB:", dataset[i]["hypB"])
+            print("human:", nbrB, "metric:", scoreB)
+            input()"""
             continue
         else:
             ignored += 1
 
-    print(" ratio correct:", correct/(correct+incorrect)*100)
+    print()
+    print("ratio correct:", correct/(correct+incorrect)*100)
     # print("correct:", correct)
     # print("incorrect:", incorrect)
     print("ratio ignored:", ignored/(ignored+accepted)*100)
@@ -171,11 +174,12 @@ def evaluator(metric, dataset, memory, certitude=0.3, verbose=True):
     # 0-5 ; 1-4 ; 2-3
     # 0%  ; 25% ; 33%
 
+    return correct/(correct+incorrect)*100
+
 
 def write(namefile, x, y):
     with open("results/" + namefile + ".txt", "w", encoding="utf8") as file:
         file.write(namefile + "," + str(x) + "," + str(y) + "\n")
-
 
 if __name__ == '__main__':
     print("Reading dataset...")
@@ -184,25 +188,24 @@ if __name__ == '__main__':
     # useful for the metric but we do not need to recompute every time
     print("Importing...")
 
-    """
     # semdist
+    """
     from sentence_transformers import SentenceTransformer
     from sklearn.metrics.pairwise import cosine_similarity
     print("Loading model...")
-    # model = SentenceTransformer('sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2')
+    model = SentenceTransformer('sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2')
     # model = SentenceTransformer('dangvantuan/sentence-camembert-large')
     # model = SentenceTransformer('dangvantuan/sentence-camembert-base')
     # model = SentenceTransformer('distiluse-base-multilingual-cased')
     # model = SentenceTransformer('bert-base-nli-mean-tokens')
     # model = SentenceTransformer('paraphrase-MiniLM-L6-v2')
     # model = SentenceTransformer('all-mpnet-base-v2')
-    model = SentenceTransformer('multi-qa-mpnet-base-dot-v1')
-    model = SentenceTransformer('all-distilroberta-v1')
-    model = SentenceTransformer('all-MiniLM-L12-v2')
-    model = SentenceTransformer('multi-qa-MiniLM-L6-cos-v1')
-    model = SentenceTransformer('paraphrase-multilingual-mpnet-base-v2')
-    model = SentenceTransformer('paraphrase-multilingual-MiniLM-L12-v2')
-
+    # model = SentenceTransformer('multi-qa-mpnet-base-dot-v1')
+    # model = SentenceTransformer('all-distilroberta-v1')
+    # model = SentenceTransformer('all-MiniLM-L12-v2')
+    # model = SentenceTransformer('multi-qa-MiniLM-L6-cos-v1')
+    # model = SentenceTransformer('paraphrase-multilingual-mpnet-base-v2')
+    # model = SentenceTransformer('paraphrase-multilingual-MiniLM-L12-v2')
     memory=model
     """
 
@@ -218,19 +221,28 @@ if __name__ == '__main__':
     memory=(flaubert_tokenizer, flaubert)
     """
 
-    # semdist CamemBERT
-    """
+    # semdist camembert
     import torch
     from transformers import CamembertModel, CamembertTokenizer
+    from transformers import CamembertConfig # added
     from sklearn.metrics.pairwise import cosine_similarity
     # modelname = 'camembert-base'
-    # modelname = 'camembert/camembert-large'
-    modelname = 'camembert/camembert-base-wikipedia-4gb'
-    camembert, log = CamembertModel.from_pretrained(modelname, output_loading_info=True)
+    modelname = 'camembert/camembert-large'
+    config = CamembertConfig.from_pretrained(modelname, output_hidden_states=True, return_dict=False) # added
+    camembert = CamembertModel.from_pretrained(modelname, config=config) # added
+    #camembert, log = CamembertModel.from_pretrained(modelname, output_loading_info=True) # deleted
     camembert_tokenizer = CamembertTokenizer.from_pretrained(modelname, do_lowercase=True)
     memory=(camembert_tokenizer, camembert)
-    """
-
+    
+    print("Evaluation...")
+    for i in range(0, 25):
+        print("\n\n")
+        print("layer:", i)
+        score1 = evaluator(custom_metric, dataset, memory=(camembert_tokenizer, camembert, i), certitude=0)
+        score2 = evaluator(custom_metric, dataset, memory=(camembert_tokenizer, camembert, i), certitude=0.3)
+        with open("results_SD_camembert_large.txt", "a", encoding="utf8") as file:
+            file.write(str(i) + " : " + str(score1) + " ; " + str(score2) + "\n")
+    exit(-1)
 
     # ember
     """
@@ -266,7 +278,7 @@ if __name__ == '__main__':
     memory = 0
     """
 
-    # cer
+     # cer
     """
     from jiwer import cer
     memory = 0
@@ -278,18 +290,23 @@ if __name__ == '__main__':
     # memory = BERTScorer(lang="fr")
     # memory = BERTScorer(model_type="amazon/bort")
     # memory = BERTScorer(model_type="distilbert-base-multilingual-cased")
-    memory = BERTScorer(model_type="microsoft/deberta-xlarge-mnli")
+    # memory = BERTScorer(model_type="microsoft/deberta-xlarge-mnli")
+    # memory = BERTScorer(model_type="camembert-base")
+    for i in range(18, 25):
+        print("\n\n")
+        print("layer:", i)
+        memory = BERTScorer(model_type="camembert/camembert-large", num_layers=i)
+        score1 = evaluator(custom_metric, dataset, memory=memory, certitude=0)
+        score2 = evaluator(custom_metric, dataset, memory=memory, certitude=0.3)
+        with open("results.txt", "a", encoding="utf8") as file:
+            file.write(str(i) + " : " + str(score1) + " ; " + str(score2) + "\n")
+    exit(-1)
     """
 
-    # character-bert
-    from transformers import BertTokenizer
-    from modeling.character_bert import CharacterBertModel
-    from utils.character_cnn import CharacterIndexer
-    tokenizer = BertTokenizer.from_pretrained('bert-base-uncased')
-    indexer = CharacterIndexer()
-    model = CharacterBertModel.from_pretrained('/users/troux/these/expe/metrics/character-bert/pretrained-models/general_character_bert')
-    memory = (tokenizer, indexer, model)
-
-    x_score = evaluator(custom_metric, dataset, memory=memory, certitude=cert_X)
-    y_score = evaluator(custom_metric, dataset, memory=memory, certitude=cert_Y)
-    write("characterBERT", x_score, y_score)
+    # evaluation of metric
+    print("Evaluation...")
+    
+    """
+    evaluator(custom_metric, dataset, memory=memory, certitude=0)
+    evaluator(custom_metric, dataset, memory=memory, certitude=0.3)
+    """
