@@ -168,7 +168,7 @@ if __name__ == '__main__':
     # cer
     from jiwer import cer
     memory2 = 0
-    Dicomodels["wer"] = wer_
+    Dicomodels["wer"] = wer_ # tous ces résultats sont faussées par l'utilisation de wer à la place de cer
     Dicomemory["wer"] = memory
 
 
