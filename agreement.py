@@ -50,18 +50,6 @@ def semdist_camembert(ref, hyp, memory):
     hyp_projection = all_layer_embeddings_hyp[layer][0].detach().numpy()
     score = cosine_similarity(ref_projection, hyp_projection)[0][0]
     
-    # print()
-    # encoded_sentence = torch.tensor(camembert_tokenizer.encode(camembert_tokenizer.tokenize(ref))).unsqueeze(0)
-    # embeddings, _, all_layer_embeddings = camembert(encoded_sentence)
-    # print(embeddings.shape)
-    # print(len(all_layer_embeddings))
-    # print(all_layer_embeddings[0].shape)
-    # while True:
-    #     print()
-    #     #x = int(input("x = "))
-    #     y = int(input("y = "))
-    #     print(cosine_similarity(embeddings[0].detach().numpy(), all_layer_embeddings[y][0].detach().numpy())[0][0])
-    
     return (1-score)*100 # lower is better
 
 
@@ -123,18 +111,8 @@ def bertscore(ref, hyp, memory):
     return 100-F1*100
 
 
-"""
-def custom_metric(ref, hyp, memory):
-    # return semdist(ref, hyp, memory)
-    # return ember(ref, hyp, memory)
-    # return semdist_flaubert(ref, hyp, memory)
-    # return semdist_camembert(ref, hyp, memory)
-    # return wer_(ref, hyp, memory)
-    # return cer_(ref, hyp, memory)
-    return bertscore(ref, hyp, memory)
-"""
-
-def evaluator(metric, dataset, memory, certitude=0.3, verbose=True):
+def evaluator(metric1, metric2, dataset, memory1, memory2, verbose=True):
+    # si > les deux, ou <, ou ==
     ignored = 0
     accepted = 0
     correct = 0
@@ -145,100 +123,80 @@ def evaluator(metric, dataset, memory, certitude=0.3, verbose=True):
     for i in range(len(dataset)):
         if verbose:
             bar.update(i)
-        nbrA = dataset[i]["nbrA"]
-        nbrB = dataset[i]["nbrB"]
         
-        if nbrA+nbrB < 5:
-            ignored += 1
-            continue
-        maximum = max(nbrA, nbrB)
-        c = maximum/(nbrA+nbrB)
-        if c >= certitude: # if humans are certain about choice
-            accepted += 1
-            scoreA = metric(dataset[i]["reference"], dataset[i]["hypA"], memory=memory)
-            scoreB = metric(dataset[i]["reference"], dataset[i]["hypB"], memory=memory)
-            if (scoreA < scoreB and nbrA > nbrB) or (scoreB < scoreA and nbrB > nbrA):
+            score1A = metric1(dataset[i]["reference"], dataset[i]["hypA"], memory=memory1)
+            score1B = metric1(dataset[i]["reference"], dataset[i]["hypB"], memory=memory1)
+            score2A = metric2(dataset[i]["reference"], dataset[i]["hypA"], memory=memory2)
+            score2B = metric2(dataset[i]["reference"], dataset[i]["hypB"], memory=memory2)
+            if (score1A < score1B and score2A < score2B) or (score1A > score1B and score2A > score2B) or (score1A == score1B and score2A == score2B):
                 correct += 1
             else:
                 incorrect += 1
-            """print()
-            print("ref:", dataset[i]["reference"])
-            print("hypA:", dataset[i]["hypA"])
-            print("human:", nbrA, "metric:", scoreA)
-            print("hypB:", dataset[i]["hypB"])
-            print("human:", nbrB, "metric:", scoreB)
-            input()"""
             continue
         else:
             ignored += 1
 
     print()
     print("ratio correct:", correct/(correct+incorrect)*100)
-    # print("correct:", correct)
-    # print("incorrect:", incorrect)
-    print("ratio ignored:", ignored/(ignored+accepted)*100)
-    # print("ignored:", ignored)
-    # print("accepted:", accepted)
-
-    # 0-7 ; 1-6 ; 2-5 ; 3-4 ;
-    # 0%  ; 14% ; 29% ; 43%
-    # 100%; 86% ; 71% ; 57%
-    # 
-    # 0-6 ; 1-5 ; 2-4
-    # 0%  ; 20% ; 50%
-    # 100%; 67% ; 0%
-    #
-    # 0-5 ; 1-4 ; 2-3
-    # 0%  ; 25% ; 33%
-    # 100%; 60% ; 20%
-
     return correct/(correct+incorrect)*100
 
 
-def write(namefile, x, y):
-    with open("results/" + namefile + ".txt", "w", encoding="utf8") as file:
-        file.write(namefile + "," + str(x) + "," + str(y) + "\n")
+def write(namefile, x):
+    with open("results/agreement/" + namefile + ".txt", "w", encoding="utf8") as file:
+        file.write(namefile + "," + str(x) + "\n")
 
 if __name__ == '__main__':
     print("Reading dataset...")
     dataset = read_dataset("hats.txt")
 
-    cert_X = 1
-    cert_Y = 0.7
-
     # useful for the metric but we do not need to recompute every time
     print("Importing...")
 
-    """
-    # semdist
+
+
+    # dictionaries of models and memory
+    Dicomodels = dict()
+    Dicomemory = dict()
+
+
+    # wer
+    from jiwer import wer
+    memory = 0
+    Dicomodels["wer"] = wer_
+    Dicomemory["wer"] = memory
+    
+    # cer
+    from jiwer import cer
+    memory2 = 0
+    Dicomodels["wer"] = wer_
+    Dicomemory["wer"] = memory
+
+
+
+    # semdist ------------------
     from sentence_transformers import SentenceTransformer
     from sklearn.metrics.pairwise import cosine_similarity
     
     # SD original # sentence
     model = SentenceTransformer('sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2')
     memory=model
-    x_score = evaluator(semdist, dataset, memory=memory, certitude=cert_X)
-    y_score = evaluator(semdist, dataset, memory=memory, certitude=cert_Y)
-    write("SD_sentence_original", x_score, y_score)
-
+    Dicomodels["SD_sentence_original"] = semdist
+    Dicomemory["SD_sentence_original"] = memory
+    
     # SD_sentence_camembert_large
     model = SentenceTransformer('dangvantuan/sentence-camembert-large')
     memory=model
-    x_score = evaluator(semdist, dataset, memory=memory, certitude=cert_X)
-    y_score = evaluator(semdist, dataset, memory=memory, certitude=cert_Y)
-    write("SD_sentence_camembert_large", x_score, y_score)
+    Dicomodels["SD_sentence_camembert_large"] = semdist
+    Dicomemory["SD_sentence_camembert_large"] = memory
 
     # SD_sentence_camembert_base
     model = SentenceTransformer('dangvantuan/sentence-camembert-base')
     memory=model
-    x_score = evaluator(semdist, dataset, memory=memory, certitude=cert_X)
-    y_score = evaluator(semdist, dataset, memory=memory, certitude=cert_Y)
-    write("SD_sentence_camembert_base", x_score, y_score)
-    
-    
-    
+    Dicomodels["SD_sentence_camembert_base"] = semdist
+    Dicomemory["SD_sentence_camembert_base"] = memory
 
-    # semdist flaubert
+
+    # semdist flaubert ------
     import torch
     from transformers import FlaubertModel, FlaubertTokenizer
     from sklearn.metrics.pairwise import cosine_similarity
@@ -248,21 +206,19 @@ if __name__ == '__main__':
     flaubert, log = FlaubertModel.from_pretrained(modelname, output_loading_info=True)
     flaubert_tokenizer = FlaubertTokenizer.from_pretrained(modelname, do_lowercase=True)
     memory=(flaubert_tokenizer, flaubert)
-    x_score = evaluator(semdist_flaubert, dataset, memory=memory, certitude=cert_X)
-    y_score = evaluator(semdist_flaubert, dataset, memory=memory, certitude=cert_Y)
-    write("SD_flaubert_base", x_score, y_score)
+    Dicomodels["SD_flaubert_base"] = semdist_flaubert
+    Dicomemory["SD_flaubert_base"] = memory
     
     # SD_flaubert_large
     modelname = 'flaubert/flaubert_large_cased'
     flaubert, log = FlaubertModel.from_pretrained(modelname, output_loading_info=True)
     flaubert_tokenizer = FlaubertTokenizer.from_pretrained(modelname, do_lowercase=True)
     memory=(flaubert_tokenizer, flaubert)
-    x_score = evaluator(semdist_flaubert, dataset, memory=memory, certitude=cert_X)
-    y_score = evaluator(semdist_flaubert, dataset, memory=memory, certitude=cert_Y)
-    write("SD_flaubert_large", x_score, y_score)
+    Dicomodels["SD_flaubert_large"] = semdist_flaubert
+    Dicomemory["SD_flaubert_large"] = memory
 
 
-    # semdist camembert
+    # semdist camembert ---------
     import torch
     from transformers import CamembertModel, CamembertTokenizer
     from transformers import CamembertConfig # added
@@ -274,22 +230,19 @@ if __name__ == '__main__':
     camembert = CamembertModel.from_pretrained(modelname, config=config) # added
     camembert_tokenizer = CamembertTokenizer.from_pretrained(modelname, do_lowercase=True)
     memory=(camembert_tokenizer, camembert, -1)
-    x_score = evaluator(semdist_camembert, dataset, memory=memory, certitude=cert_X)
-    y_score = evaluator(semdist_camembert, dataset, memory=memory, certitude=cert_Y)
-    write("SD_camembert_base", x_score, y_score)
+    Dicomodels["SD_camembert_base"] = semdist_camembert
+    Dicomemory["SD_camembert_base"] = memory
 
-    
     # SD_camembert_large
     modelname = 'camembert/camembert-large'
     config = CamembertConfig.from_pretrained(modelname, output_hidden_states=True, return_dict=False) # added
     camembert = CamembertModel.from_pretrained(modelname, config=config) # added
     camembert_tokenizer = CamembertTokenizer.from_pretrained(modelname, do_lowercase=True)
     memory=(camembert_tokenizer, camembert, -1)
-    x_score = evaluator(semdist_camembert, dataset, memory=memory, certitude=cert_X)
-    y_score = evaluator(semdist_camembert, dataset, memory=memory, certitude=cert_Y)
-    write("SD_camembert_large", x_score, y_score)
+    Dicomodels["SD_camembert_large"] = semdist_camembert
+    Dicomemory["SD_camembert_large"] = memory
 
-
+    
     # ember
     from scipy import spatial
     import utils.aligned_wer as awer
@@ -315,58 +268,33 @@ if __name__ == '__main__':
                 tok2emb[ligne[0]] = emb
     print("Embeddings loaded.")
     memory=(tok2emb, 0.3, 0.4)
-    x_score = evaluator(ember, dataset, memory=memory, certitude=cert_X)
-    y_score = evaluator(ember, dataset, memory=memory, certitude=cert_Y)
-    write("ember", x_score, y_score)
+    Dicomodels["ember"] = ember
+    Dicomemory["ember"] = memory
     
-
-    # wer
-    from jiwer import wer
-    memory = 0
-    x_score = evaluator(wer_, dataset, memory=memory, certitude=cert_X)
-    y_score = evaluator(wer_, dataset, memory=memory, certitude=cert_Y)
-    write("wer", x_score, y_score)
-
-     # cer
-    from jiwer import cer
-    memory = 0
-    x_score = evaluator(cer_, dataset, memory=memory, certitude=cert_X)
-    y_score = evaluator(cer_, dataset, memory=memory, certitude=cert_Y)
-    write("cer", x_score, y_score)
-
     
-
     # bertscore
     from bert_score import BERTScorer
 
     # BS
     memory = BERTScorer(lang="fr")
-    x_score = evaluator(bertscore, dataset, memory=memory, certitude=cert_X)
-    y_score = evaluator(bertscore, dataset, memory=memory, certitude=cert_Y)
-    write("BS", x_score, y_score)
+    Dicomodels["BS"] = bertscore
+    Dicomemory["BS"] = memory
+
 
     # BS_camembert-base
     memory = BERTScorer(model_type="camembert-base", num_layers=12)
-    x_score = evaluator(bertscore, dataset, memory=memory, certitude=cert_X)
-    y_score = evaluator(bertscore, dataset, memory=memory, certitude=cert_Y)
-    write("BS_camembert-base", x_score, y_score)
+    Dicomodels["BS_camembert-base"] = bertscore
+    Dicomemory["BS_camembert-base"] = memory
 
     # BS_camembert-large
     memory = BERTScorer(model_type="camembert/camembert-large", num_layers=24)
-    x_score = evaluator(bertscore, dataset, memory=memory, certitude=cert_X)
-    y_score = evaluator(bertscore, dataset, memory=memory, certitude=cert_Y)
-    write("BS_camembert-large", x_score, y_score)
+    Dicomodels["BS_camembert-large"] = bertscore
+    Dicomemory["BS_camembert-large"] = memory
+    
 
-    """
-
-    # SD_bloom
-    from transformers import AutoModelForCausalLM, AutoTokenizer
-
-    modelname = 'bigscience/bloom'
-    tokenizer = AutoTokenizer.from_pretrained(modelname)
-
-    model = AutoModelForCausalLM.from_pretrained(modelname, device_map="auto", torch_dtype="auto")
-    memory=(tokenizer, model)
-    x_score = evaluator(semdist_flaubert, dataset, memory=memory, certitude=cert_X)
-    y_score = evaluator(semdist_flaubert, dataset, memory=memory, certitude=cert_Y)
-    write("SD_bloom", x_score, y_score)
+    for m1, _ in Dicomodels.items():
+        for m2, _ in Dicomodels.items():
+            if m1 != m2:
+                print(m1, m2)
+                x_score = evaluator(Dicomodels[m1], Dicomodels[m2], dataset, memory1=Dicomemory[m1], memory2=Dicomemory[m2])
+                write(m1 + "_" + m2, x_score)

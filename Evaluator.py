@@ -172,6 +172,11 @@ def evaluator(metric, dataset, memory, certitude=0.3, verbose=True):
     # 0%  ; 25% ; 33%
 
 
+def write(namefile, x, y):
+    with open("results/" + namefile + ".txt", "w", encoding="utf8") as file:
+        file.write(namefile + "," + str(x) + "," + str(y) + "\n")
+
+
 if __name__ == '__main__':
     print("Reading dataset...")
     dataset = read_dataset("hats.txt")
@@ -285,11 +290,6 @@ if __name__ == '__main__':
     model = CharacterBertModel.from_pretrained('/users/troux/these/expe/metrics/character-bert/pretrained-models/general_character_bert')
     memory = (tokenizer, indexer, model)
 
-
-    # evaluation of metric
-    print("Evaluation...")
-    
-    evaluator(custom_metric, dataset, memory=memory, certitude=0)
-    evaluator(custom_metric, dataset, memory=memory, certitude=0.3)
-    
-    # mettre ce foutu code en propre en rangeant ce qui n'est pas métrique dans utils
+    x_score = evaluator(custom_metric, dataset, memory=memory, certitude=cert_X)
+    y_score = evaluator(custom_metric, dataset, memory=memory, certitude=cert_Y)
+    write("characterBERT", x_score, y_score)
