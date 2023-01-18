@@ -17,122 +17,9 @@ def read_dataset(dataname):
             dataset.append(dictionary)
     return dataset
 
-
-
-
-def semdist(ref, hyp, memory):
-    model = memory
-    ref_projection = model.encode(ref).reshape(1, -1)
-    hyp_projection = model.encode(hyp).reshape(1, -1)
-    score = cosine_similarity(ref_projection, hyp_projection)[0][0]
-    return (1-score)*100 # lower is better
-
-
-
-def semdist_flaubert(ref, hyp, memory):
-    flaubert_tokenizer, flaubert = memory
-    ref_projection = flaubert(torch.tensor([flaubert_tokenizer.encode(ref)]))[0][0].detach().numpy() #.reshape(1, -1)
-    hyp_projection = flaubert(torch.tensor([flaubert_tokenizer.encode(hyp)]))[0][0].detach().numpy() #.reshape(1, -1)
-    score = cosine_similarity(ref_projection, hyp_projection)[0][0]
-    
-    return (1-score)*100 # lower is better
-
-
-
-def semdist_camembert(ref, hyp, memory):
-    camembert_tokenizer, camembert, layer = memory
-
-    encoded_ref = torch.tensor(camembert_tokenizer.encode(camembert_tokenizer.tokenize(ref))).unsqueeze(0)
-    encoded_hyp = torch.tensor(camembert_tokenizer.encode(camembert_tokenizer.tokenize(hyp))).unsqueeze(0)
-    _, _, all_layer_embeddings_ref = camembert(encoded_ref)
-    _, _, all_layer_embeddings_hyp = camembert(encoded_hyp)
-    ref_projection = all_layer_embeddings_ref[layer][0].detach().numpy()
-    hyp_projection = all_layer_embeddings_hyp[layer][0].detach().numpy()
-    score = cosine_similarity(ref_projection, hyp_projection)[0][0]
-    
-    # print()
-    # encoded_sentence = torch.tensor(camembert_tokenizer.encode(camembert_tokenizer.tokenize(ref))).unsqueeze(0)
-    # embeddings, _, all_layer_embeddings = camembert(encoded_sentence)
-    # print(embeddings.shape)
-    # print(len(all_layer_embeddings))
-    # print(all_layer_embeddings[0].shape)
-    # while True:
-    #     print()
-    #     #x = int(input("x = "))
-    #     y = int(input("y = "))
-    #     print(cosine_similarity(embeddings[0].detach().numpy(), all_layer_embeddings[y][0].detach().numpy())[0][0])
-    
-    return (1-score)*100 # lower is better
-
-
-
-def ember(ref, hyp, memory):
-    tok2emb, threshold, weight = memory
-    
-    erreurs = []
-    ref = ref.split(" ")
-    hyp = hyp.split(" ")
-    list = awer.wer(ref, hyp)[0]
-    # list = ['s', 'e', 'e', 's', 'e', 'i']
-    ri = 0 # indice for ref
-    hi = 0
-    for i in range(len(list)):
-        element = list[i]
-        if element == 's':
-            # compute cosine similarity
-            try:
-                sim = 1 - spatial.distance.cosine(tok2emb[ref[ri]], tok2emb[hyp[hi]])
-            except KeyError:
-                sim = 0 # one of words do not exist in the vocabulary
-            ri += 1
-            hi += 1
-            # threshold check
-            if sim > threshold:
-                erreurs.append(weight)
-            else:
-                erreurs.append(1)
-        elif element != "e":
-            erreurs.append(1)
-            if element == "d":
-                ri += 1
-            elif element == "i":
-                hi += 1
-            else:
-                print("ERREUR, element == " + element)
-                exit(-1)
-        else:
-            erreurs.append(0)
-            ri += 1
-            hi += 1
-    return sum(erreurs)/len(ref)
-
-
-
-def wer_(ref, hyp, memory):
-    return wer(ref, hyp)
-
-
-
-def cer_(ref, hyp, memory):
-    return cer(ref, hyp)
-
-
-def bertscore(ref, hyp, memory):
-    scorer = memory
-    P, R, F1 = scorer.score([hyp], [ref])
-    return 100-F1*100
-
-
-"""
-def custom_metric(ref, hyp, memory):
-    # return semdist(ref, hyp, memory)
-    # return ember(ref, hyp, memory)
-    # return semdist_flaubert(ref, hyp, memory)
-    # return semdist_camembert(ref, hyp, memory)
-    # return wer_(ref, hyp, memory)
-    # return cer_(ref, hyp, memory)
-    return bertscore(ref, hyp, memory)
-"""
+def custom_metric(ref, hyp, memory=0):
+    # compute a score given a textual reference and hypothesis
+    return score
 
 def evaluator(metric, dataset, memory, certitude=0.3, verbose=True):
     ignored = 0
@@ -161,43 +48,13 @@ def evaluator(metric, dataset, memory, certitude=0.3, verbose=True):
                 correct += 1
             else:
                 incorrect += 1
-            """print()
-            print("ref:", dataset[i]["reference"])
-            print("hypA:", dataset[i]["hypA"])
-            print("human:", nbrA, "metric:", scoreA)
-            print("hypB:", dataset[i]["hypB"])
-            print("human:", nbrB, "metric:", scoreB)
-            input()"""
             continue
         else:
             ignored += 1
-
     print()
     print("ratio correct:", correct/(correct+incorrect)*100)
-    # print("correct:", correct)
-    # print("incorrect:", incorrect)
     print("ratio ignored:", ignored/(ignored+accepted)*100)
-    # print("ignored:", ignored)
-    # print("accepted:", accepted)
-
-    # 0-7 ; 1-6 ; 2-5 ; 3-4 ;
-    # 0%  ; 14% ; 29% ; 43%
-    # 100%; 86% ; 71% ; 57%
-    # 
-    # 0-6 ; 1-5 ; 2-4
-    # 0%  ; 20% ; 50%
-    # 100%; 67% ; 0%
-    #
-    # 0-5 ; 1-4 ; 2-3
-    # 0%  ; 25% ; 33%
-    # 100%; 60% ; 20%
-
     return correct/(correct+incorrect)*100
-
-
-def write(namefile, x, y):
-    with open("results/" + namefile + ".txt", "w", encoding="utf8") as file:
-        file.write(namefile + "," + str(x) + "," + str(y) + "\n")
 
 if __name__ == '__main__':
     print("Reading dataset...")
@@ -370,3 +227,5 @@ if __name__ == '__main__':
     x_score = evaluator(semdist_flaubert, dataset, memory=memory, certitude=cert_X)
     y_score = evaluator(semdist_flaubert, dataset, memory=memory, certitude=cert_Y)
     write("SD_bloom", x_score, y_score)
+    x_score = evaluator(custom_metric, dataset, memory=memory, certitude=cert_X)
+    y_score = evaluator(custom_metric, dataset, memory=memory, certitude=cert_Y)
