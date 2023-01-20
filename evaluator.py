@@ -188,6 +188,7 @@ if __name__ == '__main__':
     # useful for the metric but we do not need to recompute every time
     print("Importing...")
 
+    from jiwer import wer
     evaluator(wer_, dataset, certitude=cert_X)
     evaluator(wer_, dataset, certitude=cert_Y)
 
