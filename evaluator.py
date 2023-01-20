@@ -27,6 +27,7 @@ def semdist(ref, hyp, memory):
 """
 
 
+"""
 def semdist_flaubert(ref, hyp, memory):
     flaubert_tokenizer, flaubert = memory
     ref_projection = flaubert(torch.tensor([flaubert_tokenizer.encode(ref)]))[0][0].detach().numpy() #.reshape(1, -1)
@@ -34,6 +35,7 @@ def semdist_flaubert(ref, hyp, memory):
     score = cosine_similarity(ref_projection, hyp_projection)[0][0]
 
     return (1-score)*100 # lower is better
+"""
 
 
 """
@@ -105,10 +107,10 @@ def ember(ref, hyp, memory):
     return sum(erreurs)/len(ref)
 
 
-
+"""
 def wer_(ref, hyp, memory):
     return wer(ref, hyp)
-
+"""
 
 
 def cer_(ref, hyp, memory):
@@ -132,7 +134,7 @@ def custom_metric(ref, hyp, memory):
     return bertscore(ref, hyp, memory)
 """
 
-def evaluator(metric, dataset, memory, certitude=0.3, verbose=True):
+def evaluator(metric, dataset, memory=0, certitude=0.3, verbose=True):
     ignored = 0
     accepted = 0
     correct = 0
@@ -165,6 +167,8 @@ def evaluator(metric, dataset, memory, certitude=0.3, verbose=True):
     print()
     print("ratio correct:", correct/(correct+incorrect)*100)
     print("ratio ignored:", ignored/(ignored+accepted)*100)
+    print("ignored:", ignored)
+    print("accepted:", accepted)
     return correct/(correct+incorrect)*100
 
 
@@ -183,6 +187,9 @@ if __name__ == '__main__':
 
     # useful for the metric but we do not need to recompute every time
     print("Importing...")
+
+    evaluator(wer_, dataset, certitude=cert_X)
+    evaluator(wer_, dataset, certitude=cert_Y)
 
     """
     # semdist
@@ -210,7 +217,6 @@ if __name__ == '__main__':
     y_score = evaluator(semdist, dataset, memory=memory, certitude=cert_Y)
     write("SD_sentence_camembert_base", x_score, y_score)
     
-    """
     
 
     # semdist flaubert
@@ -225,7 +231,36 @@ if __name__ == '__main__':
     memory=(flaubert_tokenizer, flaubert)
     x_score = evaluator(semdist_flaubert, dataset, memory=memory, certitude=cert_X)
     y_score = evaluator(semdist_flaubert, dataset, memory=memory, certitude=cert_Y)
-    write("SD_flaubert_oral", x_score, y_score)
+    write("SD_flaubert_oral", x_score, y_score)"""
+
+    # SD_flaubert_oral
+    """
+    modelname = 'nherve/flaubert-oral-asr_nb'
+    flaubert, log = FlaubertModel.from_pretrained(modelname, output_loading_info=True)
+    flaubert_tokenizer = FlaubertTokenizer.from_pretrained(modelname, do_lowercase=True)
+    memory=(flaubert_tokenizer, flaubert)
+    x_score = evaluator(semdist_flaubert, dataset, memory=memory, certitude=cert_X)
+    y_score = evaluator(semdist_flaubert, dataset, memory=memory, certitude=cert_Y)
+    write("SD_flaubert_oral_nb", x_score, y_score)
+
+    # SD_flaubert_oral
+    modelname = 'nherve/flaubert-oral-asr-mixed'
+    flaubert, log = FlaubertModel.from_pretrained(modelname, output_loading_info=True)
+    flaubert_tokenizer = FlaubertTokenizer.from_pretrained(modelname, do_lowercase=True)
+    memory=(flaubert_tokenizer, flaubert)
+    x_score = evaluator(semdist_flaubert, dataset, memory=memory, certitude=cert_X)
+    y_score = evaluator(semdist_flaubert, dataset, memory=memory, certitude=cert_Y)
+    write("SD_flaubert_oral_mixed", x_score, y_score)
+
+    # SD_flaubert_oral
+    modelname = 'nherve/flaubert-oral-asr-ft'
+    flaubert, log = FlaubertModel.from_pretrained(modelname, output_loading_info=True)
+    flaubert_tokenizer = FlaubertTokenizer.from_pretrained(modelname, do_lowercase=True)
+    memory=(flaubert_tokenizer, flaubert)
+    x_score = evaluator(semdist_flaubert, dataset, memory=memory, certitude=cert_X)
+    y_score = evaluator(semdist_flaubert, dataset, memory=memory, certitude=cert_Y)
+    write("SD_flaubert_oral_ft", x_score, y_score)
+    """
 
     """
     # SD_flaubert_base
