@@ -1,4 +1,5 @@
 import progressbar
+import numpy
 
 
 def read_dataset(dataname):
@@ -17,14 +18,14 @@ def read_dataset(dataname):
             dataset.append(dictionary)
     return dataset
 
-"""
+
 def semdist(ref, hyp, memory):
     model = memory
     ref_projection = model.encode(ref).reshape(1, -1)
     hyp_projection = model.encode(hyp).reshape(1, -1)
     score = cosine_similarity(ref_projection, hyp_projection)[0][0]
     return (1-score)*100 # lower is better
-"""
+
 
 
 """
@@ -188,15 +189,18 @@ if __name__ == '__main__':
     # useful for the metric but we do not need to recompute every time
     print("Importing...")
 
+    """
     from jiwer import wer
     evaluator(wer_, dataset, certitude=cert_X)
     evaluator(wer_, dataset, certitude=cert_Y)
-
     """
+
+
     # semdist
     from sentence_transformers import SentenceTransformer
     from sklearn.metrics.pairwise import cosine_similarity
     
+    """
     # SD original # sentence
     model = SentenceTransformer('sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2')
     memory=model
@@ -204,22 +208,25 @@ if __name__ == '__main__':
     y_score = evaluator(semdist, dataset, memory=memory, certitude=cert_Y)
     write("SD_sentence_original", x_score, y_score)
 
+    
     # SD_sentence_camembert_large
     model = SentenceTransformer('dangvantuan/sentence-camembert-large')
     memory=model
     x_score = evaluator(semdist, dataset, memory=memory, certitude=cert_X)
     y_score = evaluator(semdist, dataset, memory=memory, certitude=cert_Y)
     write("SD_sentence_camembert_large", x_score, y_score)
+    """
 
+    
     # SD_sentence_camembert_base
     model = SentenceTransformer('dangvantuan/sentence-camembert-base')
     memory=model
     x_score = evaluator(semdist, dataset, memory=memory, certitude=cert_X)
     y_score = evaluator(semdist, dataset, memory=memory, certitude=cert_Y)
-    write("SD_sentence_camembert_base", x_score, y_score)
+    #write("SD_sentence_camembert_base", x_score, y_score)
     
     
-
+    """
     # semdist flaubert
     import torch
     from transformers import FlaubertModel, FlaubertTokenizer
