@@ -18,14 +18,28 @@ def read_dataset(dataname):
             dataset.append(dictionary)
     return dataset
 
+def pseudo_perplexity(ref, hyp, memory):
+    tok, bert = memory
 
+    input_idx = tok.encode(hyp)
+    for i in range(1, len(input_idx)-1):
+        scores = []
+        ids_copy = input_idx.copy()
+        ids_copy[i] = 5
+        logits = bert(torch.tensor([ids_copy]))[0]
+        logits_soft = F.softmax(logits, dim=1)
+        scores.append(logits_soft[0][i][input_idx[i]])
+        return 1-(sum(scores)/len(scores))
+
+
+"""
 def semdist(ref, hyp, memory):
     model = memory
     ref_projection = model.encode(ref).reshape(1, -1)
     hyp_projection = model.encode(hyp).reshape(1, -1)
     score = cosine_similarity(ref_projection, hyp_projection)[0][0]
     return (1-score)*100 # lower is better
-
+"""
 
 
 """
@@ -135,7 +149,7 @@ def custom_metric(ref, hyp, memory):
     return bertscore(ref, hyp, memory)
 """
 
-def evaluator(metric, dataset, memory=0, certitude=0.3, verbose=True):
+def evaluator(metric, dataset, memory=0, certitude=0.7, verbose=True):
     ignored = 0
     accepted = 0
     correct = 0
@@ -188,6 +202,28 @@ if __name__ == '__main__':
 
     # useful for the metric but we do not need to recompute every time
     print("Importing...")
+
+
+
+    import torch.nn.functional as F
+    import torch
+    # marche pas, la bibliothèque le permet pas
+    # from transformers import AutoTokenizer, BertForMaskedLM
+    # tok = AutoTokenizer.from_pretrained("nherve/flaubert-oral-asr")
+    # bert = BertForMaskedLM.from_pretrained("nherve/flaubert-oral-asr")
+
+    from transformers import AutoTokenizer, CamembertForMaskedLM
+    tok = AutoTokenizer.from_pretrained("camembert-base")
+    bert = CamembertForMaskedLM.from_pretrained("camembert-base")
+
+    memory = tok, bert
+    pseudo_perplexity("ref", "je veux manger plein de pommes", memory)
+    pseudo_perplexity("ref", "ils alors dis espoir", memory)
+
+    evaluator(pseudo_perplexity, dataset, memory=memory, certitude=cert_X)
+    evaluator(pseudo_perplexity, dataset, memory=memory, certitude=cert_Y)
+
+
 
     """
     from jiwer import wer
