@@ -18,6 +18,7 @@ def read_dataset(dataname):
             dataset.append(dictionary)
     return dataset
 
+"""
 def pseudo_perplexity(ref, hyp, memory):
     tok, bert = memory
 
@@ -32,7 +33,6 @@ def pseudo_perplexity(ref, hyp, memory):
         return 1-(sum(scores)/len(scores))
 
 
-"""
 def semdist(ref, hyp, memory):
     model = memory
     ref_projection = model.encode(ref).reshape(1, -1)
@@ -122,10 +122,10 @@ def ember(ref, hyp, memory):
     return sum(erreurs)/len(ref)
 
 
-"""
+
 def wer_(ref, hyp, memory):
     return wer(ref, hyp)
-"""
+
 
 
 def cer_(ref, hyp, memory):
