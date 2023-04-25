@@ -172,9 +172,11 @@ def evaluator(metric, dataset, memory, certitude=0.3, verbose=True):
     # 0%  ; 25% ; 33%
 
 
-def write(namefile, x, y):
-    with open("results/" + namefile + ".txt", "w", encoding="utf8") as file:
-        file.write(namefile + "," + str(x) + "," + str(y) + "\n")
+def tostring(tuple):
+    return str(tuple[0]) + "," + str(tuple[1]) + "," + str(tuple[2])
+def write(namefile, x, y, z):
+    with open("results/complete/" + namefile + ".txt", "w", encoding="utf8") as file:
+        file.write(namefile + ";" + tostring(x) + ";" + tostring(y) + ";" + tostring(z) + "\n")
 
 
 if __name__ == '__main__':
@@ -290,6 +292,7 @@ if __name__ == '__main__':
     model = CharacterBertModel.from_pretrained('/users/troux/these/expe/metrics/character-bert/pretrained-models/general_character_bert')
     memory = (tokenizer, indexer, model)
 
-    x_score = evaluator(custom_metric, dataset, memory=memory, certitude=cert_X)
-    y_score = evaluator(custom_metric, dataset, memory=memory, certitude=cert_Y)
-    write("characterBERT", x_score, y_score)
+    x = evaluator(custom_metric, dataset, memory=memory, certitude=cert_X)
+    y = evaluator(custom_metric, dataset, memory=memory, certitude=cert_Y)
+    z = evaluator(custom_metric, dataset, memory=memory, certitude=cert_Z)
+    write("characterBERT", x, y, z)

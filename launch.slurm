@@ -11,4 +11,5 @@
 
 
 #python evaluator.py
-python agreement.py
+#python agreement.py
+python complete_evaluator.py

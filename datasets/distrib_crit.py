@@ -5,6 +5,7 @@ from bert_score import score
 import numpy as np
 import pickle
 from scipy import spatial
+from itertools import combinations
 
 
 
@@ -257,19 +258,29 @@ def compute_metrics():
 if __name__ == "__main__":
     # compute_metrics()
 
+    wer_results = pickle.load(open("pickle/wer_results.pkl", "rb"))
+    cer_results = pickle.load(open("pickle/cer_results.pkl", "rb"))
+    ember_results = pickle.load(open("pickle/ember_results.pkl", "rb"))
     semdist_results = pickle.load(open("pickle/semdist_results.pkl", "rb"))
     bertscore_results = pickle.load(open("pickle/bertscore_results.pkl", "rb"))
-    wer_results = pickle.load(open("pickle/wer_results.pkl", "rb"))
-
+    scores = dict()
+    scores["wer"] = wer_results
+    scores["cer"] = cer_results
+    scores["ember"] = ember_results
+    scores["semdist"] = semdist_results
+    scores["bertscore"] = bertscore_results
+    
     metrics = ["wer", "cer", "ember", "semdist", "bertscore"]
     opposite = dict()
     for metric1, metric2 in list(combinations(metrics, 2)):
         opposite[metric1 + "INV" + metric2] = 0
     
-    for i in range(len(semdist_results)):
-        sd1, sd2 = semdist_results[i]
-        bs1, bs2 = bertscore_results[i]
-        wr1, wr2 = wer_results[i]
+        for i in range(len(scores["wer"])):
+            s1A, s1B = scores[metric1][i]
+            s2A, s2B = scores[metric2][i]
 
-        if (wr1 > wr2 and sd1 < sd2) or (wr1 < wr2 and sd1 > sd2):
-            opposite["werINVsemdist"] += 1
+            if (s2A > s2B and s1A < s1B) or (s2A < s2B and s1A > s1B):
+                opposite[metric1 + "INV" + metric2] += 1
+
+    for metric_pair in opposite:
+        print(metric_pair, opposite[metric_pair])

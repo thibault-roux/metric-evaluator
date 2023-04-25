@@ -95,11 +95,11 @@ if __name__ == '__main__':
     print("Importing...")
 
 
-    """
+    
     from jiwer import wer
     evaluator(wer_, dataset, certitude=cert_X)
     evaluator(wer_, dataset, certitude=cert_Y)
-    """
+    
 
     
     # semdist
