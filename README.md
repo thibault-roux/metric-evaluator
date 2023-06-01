@@ -32,3 +32,24 @@ if __name__ == '__main__':
 
 ## Note
 The memory argument can be used to prevent loading a large model or data every time the function is called, as it can be loaded beforehand. 
+
+## Cite
+
+Please, cite the related paper if you use this framework.
+
+```
+@inproceedings{banerasroux:hal-04111840,
+  TITLE = {{HATS : Un jeu de donn{\'e}es int{\'e}grant la perception humaine appliqu{\'e}e {\`a} l'{\'e}valuation des m{\'e}triques de transcription de la parole}},
+  AUTHOR = {Ba{\~n}eras-Roux, Thibault and Wottawa, Jane and Rouvier, Michael and Merlin, Teva and Dufour, Richard},
+  URL = {https://hal.science/hal-04111840},
+  BOOKTITLE = {{Conf{\'e}rence sur le Traitement Automatique des Langues Naturelles}},
+  ADDRESS = {Paris, France},
+  ORGANIZATION = {{Association pour le Traitement Automatique des Langues (ATALA) and Association francophone de Recherche d'Information et Applications (ARIA)}},
+  YEAR = {2023},
+  MONTH = Jun,
+  KEYWORDS = {Speech recognition ; dataset ; perception ; metric ; corpus},
+  PDF = {https://hal.science/hal-04111840/file/TALN_2023___HATS___un_jeu_de_donn%C3%A9es_int%C3%A9grant_la_perception_humaine_appliqu%C3%A9_%C3%A0_l_%C3%A9valuation_des_m%C3%A9triques_de_RAP.pdf},
+  HAL_ID = {hal-04111840},
+  HAL_VERSION = {v1},
+}
+```
