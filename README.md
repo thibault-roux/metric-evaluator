@@ -5,7 +5,7 @@ Automatic tool to compute correlation between human perception of errors and met
 
 Traditional metrics for asr such as Word Error Rate (WER) and Character Error Rate (CER) are often the subject of criticism from the speech community. Several researchers are trying to find alternatives for automatic system evaluation. To verify and compare these metrics seriously, it is necessary to study its correlation with human perception.
 
-Using a dataset, we have developed a tool to evaluate these metrics.
+Using a french dataset named **HATS**, we have developed a tool to evaluate these metrics.
 
 ## Quickstart
 
