@@ -5,7 +5,7 @@ Automatic tool to compute correlation between human perception of errors and met
 
 Traditional metrics for asr such as Word Error Rate (WER) and Character Error Rate (CER) are often the subject of criticism from the speech community. Several researchers are trying to find alternatives for automatic system evaluation. To verify and compare these metrics seriously, it is necessary to study its correlation with human perception.
 
-Using a french dataset named **HATS**, we have developed a tool to evaluate these metrics.
+Using a french dataset named **HATS** (**H**uman **A**ssessed **T**ranscription **S**ide-by-Side), we have developed a tool to evaluate these metrics.
 
 ## Quickstart
 
@@ -35,16 +35,13 @@ The memory argument can be used to prevent loading a large model or data every t
 
 ## Cite
 
-Please, cite the related paper if you use this framework.
+Please, cite the related paper if you use this framework or the the HATS dataset.
 
 ```
-@inproceedings{banerasroux,
-  TITLE = {{HATS : Un jeu de donn{\'e}es int{\'e}grant la perception humaine appliqu{\'e}e {\`a} l'{\'e}valuation des m{\'e}triques de transcription de la parole}},
-  AUTHOR = {Ba{\~n}eras-Roux, Thibault and Wottawa, Jane and Rouvier, Michael and Merlin, Teva and Dufour, Richard},
-  URL = {https://hal.science/hal-04111840},
-  BOOKTITLE = {{Conf{\'e}rence sur le Traitement Automatique des Langues Naturelles}},
-  ADDRESS = {Paris, France},
-  ORGANIZATION = {{Association pour le Traitement Automatique des Langues (ATALA) and Association francophone de Recherche d'Information et Applications (ARIA)}},
-  YEAR = {2023},
+@inproceedings{baneras2023hats,
+  title={HATS: An Open data set Integrating Human Perception Applied to the Evaluation of Automatic Speech Recognition Metrics},
+  author={Ba{\~n}eras-Roux, Thibault and Wottawa, Jane and Rouvier, Mickael and Merlin, Teva and Dufour, Richard},
+  booktitle={Text, Speech and Dialogue 2023 - Interspeech Satellite},
+  year={2023}
 }
 ```
