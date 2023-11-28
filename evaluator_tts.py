@@ -20,6 +20,16 @@ def read_dataset(dataname):
 
 
 
+def load_w2v_model():
+    # HuggingFace model hub
+    model_hub_w2v2 = "LeBenchmark/wav2vec2-FR-7K-large"
+    model_w2v2 = HuggingFaceWav2Vec2(model_hub_w2v2, save_path='./save')
+    return model_w2v2
+
+def cosine_similarity(x, y):
+    return torch.dot(x, y) / (torch.norm(x) * torch.norm(y))
+
+
 def load_wav(path):
     waveform, sample_rate = torchaudio.load(path)
     # Resample if needed
@@ -32,41 +42,39 @@ def load_wav(path):
         waveform = torch.mean(waveform, dim=0, keepdim=True)
     return waveform
 
-
-def load_model():
-    # HuggingFace model hub
-    model_hub_w2v2 = "LeBenchmark/wav2vec2-FR-7K-large"
-    model_w2v2 = HuggingFaceWav2Vec2(model_hub_w2v2, save_path='./save')
-    return model_w2v2
-
-def cosine_similarity(x, y):
-    return torch.dot(x, y) / (torch.norm(x) * torch.norm(y))
-
-
-
-def get_wav(text, memory):
+def get_wav(text, tts): # save audio file if not exists
     text = text.lower()
-    model = memory
     # check if files exist in dataset/audiofiles
     namefile = text
     # remove unexpected character
     accepted = "abcdefghijklmnopqrstuvwxyzéèêëàâäôöûüùîïç_"
-    for x in text:
+    for x in namefile:
         if x not in accepted:
-            text = text.replace(x, "_")
+            namefile = namefile.replace(x, "_")
     # if audio file does not exists
-    if not os.path.isfile("dataset/audiofiles/" + text + ".wav"):
+    if not os.path.isfile("dataset/audiofiles/" + namefile + ".wav"):
         tts.tts_to_file(text, speaker_wav="audiofiles/bfm15.wav", language="fr", file_path=namefile + ".wav")
     # load audio file
-    wav, sr = librosa.load("dataset/audiofiles/" + text + ".wav", sr=16000)
+    return load_wav("dataset/audiofiles/" + namefile + ".wav")
+
+def get_features(wav, model_w2v2):
+    features = model_w2v2.forward(wav)
+    # compute only the average of the features in order to have the same shape
+    average_features = torch.mean(features[0], dim=0, keepdim=True)[0]
+    return average_features
 
 def speech_difference(ref, hyp, memory):
-    model = memory
-    ref_wav = get_wav(ref, model)
-    hyp_wav = get_wav(hyp, model)
+    tts, model_w2v2 = memory
+    # get audio files
+    ref_wav = get_wav(ref, tts)
+    hyp_wav = get_wav(hyp, tts)
+    # get features
+    ref_features = get_features(ref_wav, model_w2v2)
+    hyp_features = get_features(hyp_wav, model_w2v2)
+    # compute cosine similarity
+    cs = cosine_similarity(ref_features, hyp_features)
+    return (1-cs)*100 # lower is better
 
-    score = numpy.sum(numpy.abs(ref_wav-hyp_wav))
-    return score
 
 
 def evaluator(metric, dataset, memory=0, certitude=0.7, verbose=True):
@@ -138,4 +146,9 @@ if __name__ == '__main__':
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
     tts = TTS(model_name="tts_models/multilingual/multi-dataset/xtts_v2").to(device)
 
-    evaluator(speech_difference, dataset, certitude=cert_X)
+    from speechbrain.lobes.models.huggingface_wav2vec import HuggingFaceWav2Vec2
+    import torchaudio
+
+    model_w2v2 = load_w2v_model()
+
+    evaluator(speech_difference, dataset, memory=(tts, model_w2v2), certitude=cert_X)
