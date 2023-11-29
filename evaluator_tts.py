@@ -1,5 +1,6 @@
 import progressbar
 import numpy
+import os
 
 
 def read_dataset(dataname):
@@ -52,10 +53,10 @@ def get_wav(text, tts): # save audio file if not exists
         if x not in accepted:
             namefile = namefile.replace(x, "_")
     # if audio file does not exists
-    if not os.path.isfile("dataset/audiofiles/" + namefile + ".wav"):
-        tts.tts_to_file(text, speaker_wav="audiofiles/bfm15.wav", language="fr", file_path=namefile + ".wav")
+    if not os.path.isfile("datasets/audiofiles/" + namefile + ".wav"):
+        tts.tts_to_file(text, speaker_wav="datasets/audiofiles/bfm15.wav", language="fr", file_path="datasets/audiofiles/" + namefile + ".wav")
     # load audio file
-    return load_wav("dataset/audiofiles/" + namefile + ".wav")
+    return load_wav("datasets/audiofiles/" + namefile + ".wav")
 
 def get_features(wav, model_w2v2):
     features = model_w2v2.forward(wav)
@@ -124,9 +125,9 @@ def evaluator(metric, dataset, memory=0, certitude=0.7, verbose=True):
     return correct/(correct+incorrect+egal)*100
 
 
-def write(namefile, x, y):
+def write(namefile, x):
     with open("results/" + namefile + ".txt", "w", encoding="utf8") as file:
-        file.write(namefile + "," + str(x) + "," + str(y) + "\n")
+        file.write(namefile + "," + str(x) + "\n")
 
 
 
@@ -144,11 +145,13 @@ if __name__ == '__main__':
     from TTS.api import TTS
     
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-    tts = TTS(model_name="tts_models/multilingual/multi-dataset/xtts_v2").to(device)
+    # tts = TTS(model_name="tts_models/multilingual/multi-dataset/xtts_v2").to(device)
+    tts = TTS(model_path="../downstream/tts/model/tts_models--multilingual--multi-dataset--xtts_v2", config_path="../downstream/tts/model/tts_models--multilingual--multi-dataset--xtts_v2/config.json").to(device)
 
     from speechbrain.lobes.models.huggingface_wav2vec import HuggingFaceWav2Vec2
     import torchaudio
 
     model_w2v2 = load_w2v_model()
 
-    evaluator(speech_difference, dataset, memory=(tts, model_w2v2), certitude=cert_X)
+    result = evaluator(speech_difference, dataset, memory=(tts, model_w2v2), certitude=cert_X)
+    write("wav2vec2", result)
