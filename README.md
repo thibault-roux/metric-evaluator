@@ -39,6 +39,19 @@ if __name__ == '__main__':
     y_score = evaluator(custom_metric, dataset, memory=memory, certitude=cert_Y)
 ```
 
+## 📊 Results
+
+| Metrics                          | 100%      | 70%       | Full      |
+| -------------------------------- | --------- | --------- | --------- |
+| Word Error Rate                  | 63%       | 53%       | 49%       |
+| Character Error Rate             | 77%       | 64%       | 60%       |
+| BERTScore CamemBERT-large        | 80%       | 68%       | 65%       |
+| SemDist CamemBERT-large          | 80%       | 71%       | 67%       |
+| SemDist Sentence CamemBERT-large | **90%**   | **78%**   | **73%**   |
+| Phoneme Error Rate               | 80%       | 69%       | 64%       |
+
+To add the results of your metric, contact me at **thibault [le dot] roux [le at] univ-nantes.fr** ✉️
+
 ## 📜 Cite
 
 Please, cite the related paper if you use this toolkit or the HATS dataset.
