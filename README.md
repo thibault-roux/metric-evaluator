@@ -8,7 +8,7 @@ Traditional ASR metrics like Word Error Rate (WER) and Character Error Rate (CER
 
 ## 🗃️ HATS Dataset
 
-**HATS** (**H**uman **A**ssessed **T**ranscription **S**ide-by-Side) is a data set for French 🇫🇷 which consists of 1,000 triplets (reference, hypothesis A, hypothesis B) and 7,150 human choice annotated by 143 subjects 🫂 Their objective was to selection, given a textual reference, which of two erroneous hypotheses is the best.
+**HATS** (**H**uman **A**ssessed **T**ranscription **S**ide-by-Side) is a data set for French 🇫🇷 which consists of 1,000 triplets (reference, hypothesis A, hypothesis B) and 7,150 human choice annotated by 143 subjects 🫂 Their objective was to select, given a textual reference, which of two erroneous hypotheses is the best.
 
 ## 🧑‍🏫 Metric-Evaluator
 
