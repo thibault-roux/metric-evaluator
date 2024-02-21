@@ -1,4 +1,5 @@
 import random
+import jiwer
 
 
 
@@ -33,8 +34,10 @@ if __name__ == "__main__":
         for ref, hyp in hats:
             if (ref, hyp) not in error_annotation:
                 if filter(ref, hyp):
-                    print("ref:", ref)
-                    print("hyp:", hyp)
+                    out = jiwer.process_words(ref, hyp)
+                    printed = str(jiwer.visualize_alignment(out, show_measures=False)).split("\n")
+                    print(printed[1])
+                    print(printed[2])
                     word = input("Enter the reference word with the worst error: ")
-                    file.write(ref + "\t" + hyp + "\t" + word + "\n")
+                    # file.write(ref + "\t" + hyp + "\t" + word + "\n")
                     error_annotation.append((ref, hyp, word))
