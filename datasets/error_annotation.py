@@ -123,6 +123,7 @@ def annotation(skipped_tuto):
                 if filter(ref, hyp):
                     out = jiwer.process_words(ref, hyp)
                     printed = str(jiwer.visualize_alignment(out, show_measures=False)).split("\n")
+                    print()
                     print(printed[1])
                     print(printed[2])
                     print(printed[3])
