@@ -27,8 +27,7 @@ def load_annotated():
     return error_annotation
 
 
-
-def filter(ref, hyp):
+def clean(ref, hyp):
     # remove token "euh" from ref
     ref = ref.replace("euh", "")
     hyp = hyp.replace("euh", "")
@@ -38,7 +37,10 @@ def filter(ref, hyp):
     hyp = hyp.replace("  ", " ")
     ref = ref.replace("  ", " ")
     hyp = hyp.replace("  ", " ")
+    return ref, hyp
 
+
+def filter(ref, hyp):
     lenref = len(ref.split())
     lenhyp = len(hyp.split())
     if lenref < 3 or lenhyp < 3 or lenref > 20 or lenhyp > 20:
@@ -61,7 +63,7 @@ def print_example(ref, hyp):
     print(printed[2])
     print(printed[3])
     print()
-    print("Write << NONE >> when you don't know what to answer.")
+    print("Write << ! >> when you don't know what to answer.")
     print("Enter the worst error pair: ")
     print()
 
@@ -119,6 +121,7 @@ def annotation(skipped_tuto):
 
     with open("error_annotation.txt", "a", encoding="utf8") as file:
         for ref, hyp in hats:
+            ref, hyp = clean(ref, hyp)
             if (ref, hyp) not in error_annotation:
                 if filter(ref, hyp):
                     out = jiwer.process_words(ref, hyp)
@@ -128,9 +131,12 @@ def annotation(skipped_tuto):
                     print(printed[2])
                     print(printed[3])
                     print()
-                    print("Write << NONE >> when you don't know what to answer.")
-                    word = input("Enter the worst error pair: ")
-                    if word == "NONE":
+                    print("Write << ! >> when you don't know what to answer.")
+                    try:
+                        word = input("Enter the worst error pair: ")
+                    except UnicodeDecodeError:
+                        word = "!"
+                    if word == "!":
                         continue
                     else:
                         file.write(ref + "\t" + hyp + "\t" + word + "\n")
@@ -143,4 +149,7 @@ if __name__ == "__main__":
     skipped_tuto = True
     annotation(skipped_tuto)
 
-    # il faut retirer les tirêts et les "euh"
+    # alignments troubles
+    # espace
+    # l' objet -> l'objet
+    # haute normandie -> hautenormandie
