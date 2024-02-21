@@ -29,6 +29,16 @@ def load_annotated():
 
 
 def filter(ref, hyp):
+    # remove token "euh" from ref
+    ref = ref.replace("euh", "")
+    hyp = hyp.replace("euh", "")
+    ref = ref.replace("-", " ")
+    hyp = hyp.replace("-", " ")
+    ref = ref.replace("  ", " ")
+    hyp = hyp.replace("  ", " ")
+    ref = ref.replace("  ", " ")
+    hyp = hyp.replace("  ", " ")
+
     lenref = len(ref.split())
     lenhyp = len(hyp.split())
     if lenref < 3 or lenhyp < 3 or lenref > 20 or lenhyp > 20:
@@ -37,11 +47,14 @@ def filter(ref, hyp):
         return False
     elif jiwer.wer(ref, hyp)*lenref < 2:
         return False
+    elif jiwer.cer(ref, hyp)*len(ref) < 2:
+        return False
     else:
         return True
 
 
 def print_example(ref, hyp):
+    print()
     out = jiwer.process_words(ref, hyp)
     printed = str(jiwer.visualize_alignment(out, show_measures=False)).split("\n")
     print(printed[1])
@@ -52,7 +65,7 @@ def print_example(ref, hyp):
     print("Enter the worst error pair: ")
     print()
 
-def tutorial()
+def tutorial():
     print("Salut! Merci de venir m'aider. Je te fais un petit tuto pour t'expliquer comment ça fonctionne.")
     input("Appuie sur Entrée pour continuer...")
 
@@ -65,6 +78,8 @@ def tutorial()
     input("Appuie sur Entrée pour continuer...")
     print("Il faut donc écrire:")
     print("Enter the worst error pair: oiseau/pair")
+    print()
+    input("Appuie sur Entrée pour continuer...")
 
     print("\n------------\n\n")
     print("Deuxième exemple !")
@@ -78,6 +93,11 @@ def tutorial()
     input("Appuie sur Entrée pour continuer...")
     print("Il faut donc écrire:")
     print("Enter the worst error pair: sport/*")
+    print()
+    input("Appuie sur Entrée pour continuer...")
+
+    print()
+    print("N'oublie pas que l'on peut faire pareil pour les insertions !")
 
     
     print("\n------------\n\n")
@@ -119,5 +139,7 @@ def annotation(skipped_tuto):
 
 
 if __name__ == "__main__":
-    skipped_tuto = False
+    skipped_tuto = True
     annotation(skipped_tuto)
+
+    # il faut retirer les tirêts et les "euh"
