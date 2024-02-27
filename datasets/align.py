@@ -75,10 +75,10 @@ def needleman_wunsch_traceback(A, B, F, d):
 
 
 def transform(txt):
-    # if txt[0] == " ":
-    #     txt = txt[1:]
-    # if txt[-1] == " ":
-    #     txt = txt[:-1]
+    if txt[0] == " ":
+        txt = txt[1:]
+    if txt[-1] == " ":
+        txt = txt[:-1]
     temp = txt.split(" ")
     transformed = []
     for t in temp:
@@ -141,9 +141,6 @@ def align(ref, hyp):
     B = transform(hyp)
     d = -2
 
-    print(ref)
-    print(hyp)
-
     matrix_F = needleman_wunsch(A, B, d)
     alignmentA, alignmentB = needleman_wunsch_traceback(A, B, matrix_F, d)
 
@@ -154,8 +151,8 @@ if __name__ == "__main__":
     # ref = input("Enter reference: ")
     # hyp = input("Enter hypothesis: ")
 
-    ref = "tout même si y en avait sur les"
-    hyp = "tout mois mas sine a e sor es entai"
+    ref = "d'accord avec ça danielle schweisguth"
+    hyp = " d'accord avec ça danieèle lachosegou"
 
     print()
 
