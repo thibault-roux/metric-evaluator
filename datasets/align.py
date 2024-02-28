@@ -9,16 +9,20 @@ def needleman_wunsch(A, B, d):
 
     # Initialize the first row and column of F with gap penalties
     for i in range(len_A + 1):
-        F[i][0] = d * i
+        # F[i][0] = d * i
+        F[i][0] = d * similarity_score(A[i-1], "") * i
     for j in range(len_B + 1):
-        F[0][j] = d * j
+        # F[0][j] = d * j
+        F[0][j] = d * similarity_score(B[j-1], "") * j
 
     # Fill in the matrix F using the recurrence relation
     for i in range(1, len_A + 1):
         for j in range(1, len_B + 1):
             choice1 = F[i-1][j-1] + similarity_score(A[i-1], B[j-1])  # Assuming similarity_score is a function to calculate match/mismatch scores
-            choice2 = F[i-1][j] + d
-            choice3 = F[i][j-1] + d
+            # choice2 = F[i-1][j] + d
+            # choice3 = F[i][j-1] + d
+            choice2 = F[i-1][j] + d * similarity_score(A[i-1], "")
+            choice3 = F[i][j-1] + d * similarity_score(B[j-1], "")
             F[i][j] = max(choice1, choice2, choice3)
 
     return F
@@ -28,7 +32,7 @@ def similarity_score(a, b):
     # return 1 if a == b else -1
 
     # based on character error rate
-    return 1 - jiwer.cer(a, b)
+    return -jiwer.cer(a, b)*len(a)
 
 
 
@@ -50,7 +54,7 @@ def needleman_wunsch_traceback(A, B, F, d):
             AlignmentB = B[j - 1] + AlignmentB
             i -= 1
             j -= 1
-        elif Score == ScoreLeft + d:
+        elif Score == ScoreLeft + d * similarity_score(A[i - 1], ""):
             AlignmentA = A[i - 1] + AlignmentA
             AlignmentB = "<eps> " + AlignmentB
             i -= 1
@@ -139,7 +143,7 @@ def print_alignment(alignmentA, alignmentB):
 def align(ref, hyp):
     A = transform(ref)
     B = transform(hyp)
-    d = -2
+    d = 1
 
     matrix_F = needleman_wunsch(A, B, d)
     alignmentA, alignmentB = needleman_wunsch_traceback(A, B, matrix_F, d)
@@ -151,8 +155,8 @@ if __name__ == "__main__":
     # ref = input("Enter reference: ")
     # hyp = input("Enter hypothesis: ")
 
-    ref = "d'accord avec ça danielle schweisguth"
-    hyp = " d'accord avec ça danieèle lachosegou"
+    ref = "avec cinquante six pour cent des voix céline bracq bonjour vous êtes directrice adjointe de bva françois hollande progresse"
+    hyp = "avec cinquante six pourcent des voix céline brague bonjour vous êtes directrice adjointe de bva françois hollande progresse"
 
     print()
 
