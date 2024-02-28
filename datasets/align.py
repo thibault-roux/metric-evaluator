@@ -110,11 +110,11 @@ def print_alignment(alignmentA, alignmentB):
             line3 += alignmentB[i] + " "*(len(alignmentA[i])-len(alignmentB[i])) + " "
         elif alignmentA[i] == "<eps>":
             line1 += "*"*len(alignmentB[i]) + " "
-            line2 += "I" + " "*(max(len(alignmentA[i]), len(alignmentB[i]))-1) + " "
+            line2 += "I" + " "*(len(alignmentB[i])-1) + " "
             line3 += alignmentB[i] + " "
         elif alignmentB[i] == "<eps>":
             line1 += alignmentA[i] + " "
-            line2 += "D" + " "*(max(len(alignmentA[i]), len(alignmentB[i]))-1) + " "
+            line2 += "D" + " "*(len(alignmentA[i])-1) + " "
             line3 += "*"*len(alignmentA[i]) + " "
         elif alignmentA[i] != alignmentB[i]:
             line1 += alignmentA[i] + " "*(len(alignmentB[i])-len(alignmentA[i])) + " "
