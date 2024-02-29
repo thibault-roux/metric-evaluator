@@ -150,7 +150,7 @@ def align(ref, hyp):
 
     return print_alignment(alignmentA, alignmentB)
 
-def awer(ref,hyp):
+def awer(ref,hyp, return_alignments=False):
     A = transform(ref)
     B = transform(hyp)
     d = 1
@@ -175,8 +175,11 @@ def awer(ref,hyp):
             distance += 1
         elif alignmentA[i] == alignmentB[i]:
             errors.append("e")
-            
-    return errors, distance
+    
+    if return_alignments:
+        return errors, distance, alignmentA, alignmentB
+    else:
+        return errors, distance
 
 if __name__ == "__main__":
     # ref = input("Enter reference: ")

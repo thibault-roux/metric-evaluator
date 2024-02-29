@@ -9,6 +9,7 @@ def load_annotation(namefile):
             ref, hyp, pair = line[:-1].split("\t")
             pair = pair.split("/")
             error_annotation.append((ref, hyp, pair))
+    return error_annotation
 
 
 def semdist(ref, hyp, memory):
@@ -24,6 +25,7 @@ def cer(ref, hyp, memory):
 
 if __name__ == "__main__":
     data = load_annotation("error_annotation.txt")
+
 
     
     choice = "cer"
@@ -46,7 +48,7 @@ if __name__ == "__main__":
     accuracy = 0
     for i in range(len(data)):
         ref, hyp, pair = data[i]
-        errors, _, alignment_ref, alignment_hup = align.awer(ref, hyp)
+        errors, _, alignment_ref, alignment_hup = align.awer(ref, hyp, return_alignments=True)
 
         semdist_scores = []
         index_corrected= []
