@@ -23,6 +23,22 @@ def cer(ref, hyp, memory):
     return jiwer.cer(ref, hyp)
 
 
+def correcter(alignment_ref, alignment_hyp, index, error):
+    """Correct the error at the index of the alignment"""
+    if error == "s":
+        alignment_hyp[index] = alignment_ref[index]
+    elif error == "d":
+        alignment_hyp[index] = alignment_ref[index]
+    elif error == "i":
+        alignment_hyp[index] = "<eps>"
+
+    hyp = ""
+    for i in range(len(alignment_hyp)):
+        if alignment_hyp[i] != "<eps>":
+            hyp += alignment_hyp[i] + " "
+    return hyp[:-1]
+
+
 if __name__ == "__main__":
     data = load_annotation("error_annotation.txt")
 
@@ -48,14 +64,14 @@ if __name__ == "__main__":
     accuracy = 0
     for i in range(len(data)):
         ref, hyp, pair = data[i]
-        errors, _, alignment_ref, alignment_hup = align.awer(ref, hyp, return_alignments=True)
+        errors, _, alignment_ref, alignment_hyp = align.awer(ref, hyp, return_alignments=True)
 
         semdist_scores = []
         index_corrected= []
         for j in range(len(errors)):
             if errors[j] != "e":
-                hyp = correct(alignment_ref, alignment_hyp, j, errors[j])
-                scores.append(semdist(ref, hyp, model))
+                corrected_hyp = correcter(alignment_ref, alignment_hyp, j, errors[j])
+                scores.append(metric(ref, corrected_hyp, memory))
                 index_corrected.append(j)
         # get the index of the lowest score
         if len(scores) > 0:
