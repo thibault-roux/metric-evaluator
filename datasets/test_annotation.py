@@ -22,9 +22,14 @@ def semdist(ref, hyp, memory):
 def cer(ref, hyp, memory):
     return jiwer.cer(ref, hyp)
 
+def random_metric(ref, hyp, memory):
+    return random.uniform(0, 1)
 
-def correcter(alignment_ref, alignment_hyp, index, error):
+
+def correcter(og_alignment_ref, og_alignment_hyp, index, error):
     """Correct the error at the index of the alignment"""
+    alignment_ref = og_alignment_ref.copy()
+    alignment_hyp = og_alignment_hyp.copy()
     if error == "s":
         alignment_hyp[index] = alignment_ref[index]
     elif error == "d":
@@ -44,13 +49,18 @@ if __name__ == "__main__":
 
 
     
-    choice = "cer"
+    # choice = "cer"
+    choice = "random"
     # choice = "SD_sent_camemlarge"
 
     if choice == "cer":
         import jiwer
         memory = 0
         metric = cer
+    elif choice == "random":
+        import random
+        memory = 0
+        metric = random_metric
     elif choice == "SD_sent_camemlarge":
         from sentence_transformers import SentenceTransformer
         from sklearn.metrics.pairwise import cosine_similarity
@@ -66,13 +76,17 @@ if __name__ == "__main__":
         ref, hyp, pair = data[i]
         errors, _, alignment_ref, alignment_hyp = align.awer(ref, hyp, return_alignments=True)
 
-        semdist_scores = []
+        scores = []
         index_corrected= []
         for j in range(len(errors)):
             if errors[j] != "e":
                 corrected_hyp = correcter(alignment_ref, alignment_hyp, j, errors[j])
                 scores.append(metric(ref, corrected_hyp, memory))
                 index_corrected.append(j)
+        print(alignment_ref)
+        print(errors)
+        print(alignment_hyp)
+        print(scores)
         # get the index of the lowest score
         if len(scores) > 0:
             index = scores.index(min(scores)) # index in the scores list
