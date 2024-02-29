@@ -50,8 +50,8 @@ if __name__ == "__main__":
 
     
     # choice = "cer"
-    choice = "random"
-    # choice = "SD_sent_camemlarge"
+    # choice = "random"
+    choice = "SD_sent_camemlarge"
 
     if choice == "cer":
         import jiwer
@@ -83,10 +83,6 @@ if __name__ == "__main__":
                 corrected_hyp = correcter(alignment_ref, alignment_hyp, j, errors[j])
                 scores.append(metric(ref, corrected_hyp, memory))
                 index_corrected.append(j)
-        print(alignment_ref)
-        print(errors)
-        print(alignment_hyp)
-        print(scores)
         # get the index of the lowest score
         if len(scores) > 0:
             index = scores.index(min(scores)) # index in the scores list
@@ -97,3 +93,7 @@ if __name__ == "__main__":
             raise ValueError("No scores found")
 
     print("Accuracy: ", accuracy/len(data))
+
+    # semdist = 0.4697
+    # random = 0.2424
+    # cer = 0.3485
