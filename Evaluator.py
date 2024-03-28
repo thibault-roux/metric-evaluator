@@ -122,8 +122,8 @@ def custom_metric(ref, hyp, memory):
     # return semdist_bert(ref, hyp, memory) # FlauBERT & CamemBERT
     # return wer_(ref, hyp, memory)
     # return cer_(ref, hyp, memory)
-    # return bertscore(ref, hyp, memory)
-    return character_bert(ref, hyp, memory)
+    return bertscore(ref, hyp, memory)
+    # return character_bert(ref, hyp, memory)
 
 def evaluator(metric, dataset, memory, certitude=0.3, verbose=True):
     ignored = 0
