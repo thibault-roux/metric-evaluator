@@ -278,10 +278,11 @@ if __name__ == '__main__':
     # bertscore
     
     from bert_score import BERTScorer
-    memory = BERTScorer(lang="fr")
+    # memory = BERTScorer(lang="fr")
     # memory = BERTScorer(model_type="amazon/bort")
     # memory = BERTScorer(model_type="distilbert-base-multilingual-cased")
     # memory = BERTScorer(model_type="microsoft/deberta-xlarge-mnli")
+    memory = BERTScorer(model_type="almanach/camembert-large") # layer 14
 
     # character-bert
     # from transformers import BertTokenizer
