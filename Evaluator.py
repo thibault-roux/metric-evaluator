@@ -89,13 +89,13 @@ def cer_(ref, hyp, memory):
     return cer(ref, hyp)
 """
 
-"""
+
 def bertscore(ref, hyp, memory):
     scorer = memory
     P, R, F1 = scorer.score([hyp], [ref])
     return 100-F1*100
-"""
 
+"""
 def character_bert(ref, hyp, memory):
     tokenizer, indexer, model = memory
 
@@ -115,6 +115,7 @@ def character_bert(ref, hyp, memory):
 
     score = cosine_similarity(embeddings_for_ref[0].detach().reshape(1, -1), embeddings_for_hyp[-1].detach().reshape(1, -1))[0][0]
     return score
+"""
 
 def custom_metric(ref, hyp, memory):
     # return semdist(ref, hyp, memory)
