@@ -275,24 +275,28 @@ if __name__ == '__main__':
     """
 
     # bertscore
-    """
+    
     from bert_score import BERTScorer
-    # memory = BERTScorer(lang="fr")
+    memory = BERTScorer(lang="fr")
     # memory = BERTScorer(model_type="amazon/bort")
     # memory = BERTScorer(model_type="distilbert-base-multilingual-cased")
-    memory = BERTScorer(model_type="microsoft/deberta-xlarge-mnli")
-    """
+    # memory = BERTScorer(model_type="microsoft/deberta-xlarge-mnli")
 
     # character-bert
-    from transformers import BertTokenizer
-    from modeling.character_bert import CharacterBertModel
-    from utils.character_cnn import CharacterIndexer
-    tokenizer = BertTokenizer.from_pretrained('bert-base-uncased')
-    indexer = CharacterIndexer()
-    model = CharacterBertModel.from_pretrained('/users/troux/these/expe/metrics/character-bert/pretrained-models/general_character_bert')
-    memory = (tokenizer, indexer, model)
+    # from transformers import BertTokenizer
+    # from modeling.character_bert import CharacterBertModel
+    # from utils.character_cnn import CharacterIndexer
+    # tokenizer = BertTokenizer.from_pretrained('bert-base-uncased')
+    # indexer = CharacterIndexer()
+    # model = CharacterBertModel.from_pretrained('/users/troux/these/expe/metrics/character-bert/pretrained-models/general_character_bert')
+    # memory = (tokenizer, indexer, model)
+
+    cert_X = 1
+    cert_Y = 0.7
+    cert_Z = 0
 
     x = evaluator(custom_metric, dataset, memory=memory, certitude=cert_X)
-    y = evaluator(custom_metric, dataset, memory=memory, certitude=cert_Y)
-    z = evaluator(custom_metric, dataset, memory=memory, certitude=cert_Z)
-    write("characterBERT", x, y, z)
+    # y = evaluator(custom_metric, dataset, memory=memory, certitude=cert_Y)
+    # z = evaluator(custom_metric, dataset, memory=memory, certitude=cert_Z)
+    # write("bertscore", x, y, z)
+    print(x) #, y, z)
