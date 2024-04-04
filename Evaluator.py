@@ -276,13 +276,18 @@ if __name__ == '__main__':
     """
 
     # bertscore
+
+    with open("datasets/reftest.txt", "r", encoding="utf8") as file:
+        corpus = [] # used to compute the idf weights
+        for line in file:
+            corpus.append(line[:-1])
     
     from bert_score import BERTScorer
     # memory = BERTScorer(lang="fr")
     # memory = BERTScorer(model_type="amazon/bort")
     # memory = BERTScorer(model_type="distilbert-base-multilingual-cased")
     # memory = BERTScorer(model_type="microsoft/deberta-xlarge-mnli")
-    memory = BERTScorer(model_type="almanach/camembert-large") # layer 14
+    memory = BERTScorer(model_type="almanach/camembert-large", idf=True, idf_sents=corpus) # layer 14
 
     # character-bert
     # from transformers import BertTokenizer
