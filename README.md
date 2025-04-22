@@ -50,7 +50,7 @@ if __name__ == '__main__':
 | SemDist Sentence CamemBERT-large | **90%**   | **78%**   | **73%**   |
 | Phoneme Error Rate               | 80%       | 69%       | 64%       |
 
-To add the results of your metric, contact me at **thibault [le dot] roux [le at] univ-nantes.fr** ✉️
+To add the results of your metric, contact me at **thibault [le dot] roux [le at] uclouvain.be** ✉️
 
 ## 📜 Cite
 
