@@ -58,9 +58,11 @@ Please, cite the related paper if you use this toolkit or the HATS dataset.
 
 ```
 @inproceedings{baneras2023hats,
-  title={HATS: An Open data set Integrating Human Perception Applied to the Evaluation of Automatic Speech Recognition Metrics},
+  title={Hats: An open data set integrating human perception applied to the evaluation of automatic speech recognition metrics},
   author={Ba{\~n}eras-Roux, Thibault and Wottawa, Jane and Rouvier, Mickael and Merlin, Teva and Dufour, Richard},
-  booktitle={Text, Speech and Dialogue 2023 - Interspeech Satellite},
-  year={2023}
+  booktitle={International Conference on Text, Speech, and Dialogue},
+  pages={164--175},
+  year={2023},
+  organization={Springer}
 }
 ```
