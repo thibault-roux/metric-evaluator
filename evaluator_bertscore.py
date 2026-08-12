@@ -111,7 +111,7 @@ def evaluator(sims, dataset, certitude=0.3, verbose=True):
         nbrA = dataset[i]["nbrA"]
         nbrB = dataset[i]["nbrB"]
 
-        if nbrA + nbrB < 5:
+        if nbrA + nbrB < 3:
             ignored += 1
             continue
         maximum = max(nbrA, nbrB)
@@ -139,35 +139,61 @@ def evaluator(sims, dataset, certitude=0.3, verbose=True):
 
 
 def main(model_name, num_layers=None):
-    print("Reading dataset...")
+    print(f"Evaluating {model_name} with num_layers={num_layers}...")
+
     dataset = read_dataset("hats-en.txt")
 
     cert_X = 1
-    # cert_Y = 0.7
-    # cert_Z = 0
 
-    # model = SentenceTransformer(model_name)
-    model = BERTScorer(model_type=model_name, num_layers=num_layers)
+    model = BERTScorer(
+        model_type=model_name,
+        num_layers=num_layers
+    )
 
     try:
-        sims = get_or_compute_sims(model, dataset, model_name, num_layers)
+        # This either loads from cache OR computes the scores.
+        sims = get_or_compute_sims(
+            model,
+            dataset,
+            model_name,
+            num_layers
+        )
 
-        x_score = evaluator(sims, dataset, certitude=cert_X)  # certitude is useful to filter utterances where humans are unsure
-        # y_score = evaluator(sims, dataset, certitude=cert_Y)
-        # z_score = evaluator(sims, dataset, certitude=cert_Z)
+        # Always evaluate the scores, regardless of where they came from.
+        x_score = evaluator(
+            sims,
+            dataset,
+            certitude=cert_X
+        )
 
-        if x_score is None:
-            print(f"Skipping write for {model_name} (num_layers={num_layers}): no items met certitude={cert_X}.")
-            return
+        # Always append a result if evaluator returned a score.
+        if x_score is not None:
+            os.makedirs("out", exist_ok=True)
 
-        # with open("out/results_bertscore.txt", "a", encoding="utf8") as file:
-        #     file.write(f"{model_name}\t{num_layers}\t{x_score:.2f}\t{y_score:.2f}\t{z_score:.2f}\n")
+            with open(
+                "out/results_bertscore_en.txt",
+                "a",
+                encoding="utf8"
+            ) as file:
+                file.write(
+                    f"{model_name}\t{num_layers}\t{x_score:.2f}\n"
+                )
 
-        with open("out/results_bertscore_en.txt", "a", encoding="utf8") as file:
-            file.write(f"{model_name}\t{num_layers}\t{x_score:.2f}\n")
+            print(
+                f"Saved result: {model_name}\t{num_layers}\t{x_score:.2f}"
+            )
+
+        else:
+            print(
+                f"No score for {model_name} "
+                f"(num_layers={num_layers})"
+            )
+
     except AssertionError:
-        print(f"Error evaluating {model_name} with num_layers={num_layers}. Skipping.")
-
+        print(
+            f"Error evaluating {model_name} "
+            f"with num_layers={num_layers}. Skipping."
+        )
 
 if __name__ == '__main__':
 
@@ -176,64 +202,64 @@ if __name__ == '__main__':
         # Qwen 3
         # ============================================================
         "Qwen/Qwen3-0.6B": 28,
-        # "Qwen/Qwen3-1.7B": 28,
-        # "Qwen/Qwen3-4B": 36,
-        # "Qwen/Qwen3-8B": 36,
-        # "Qwen/Qwen3-Embedding-0.6B": 28,
-        # "Qwen/Qwen3-Embedding-4B": 36,
-        # "Qwen/Qwen3-Embedding-8B": 36,
+        "Qwen/Qwen3-1.7B": 28,
+        "Qwen/Qwen3-4B": 36,
+        "Qwen/Qwen3-8B": 36,
+        "Qwen/Qwen3-Embedding-0.6B": 28,
+        "Qwen/Qwen3-Embedding-4B": 36,
+        "Qwen/Qwen3-Embedding-8B": 36,
 
-        # # ============================================================
-        # # BERT
-        # # ============================================================
-        # "google-bert/bert-base-uncased": 12,
-        # "google-bert/bert-large-uncased": 24,
+        # ============================================================
+        # BERT
+        # ============================================================
+        "google-bert/bert-base-uncased": 12,
+        "google-bert/bert-large-uncased": 24,
 
-        # # ============================================================
-        # # RoBERTa
-        # # ============================================================
-        # "FacebookAI/roberta-base": 12,
-        # "FacebookAI/roberta-large": 24,
+        # ============================================================
+        # RoBERTa
+        # ============================================================
+        "FacebookAI/roberta-base": 12,
+        "FacebookAI/roberta-large": 24,
 
-        # # ============================================================
-        # # Llama 3.2
-        # # ============================================================
-        # "meta-llama/Llama-3.2-1B": 16,
-        # "meta-llama/Llama-3.2-3B": 28,
+        # ============================================================
+        # Llama 3.2
+        # ============================================================
+        "meta-llama/Llama-3.2-1B": 16,
+        "meta-llama/Llama-3.2-3B": 28,
 
-        # # ============================================================
-        # # Gemma 3
-        # # ============================================================
-        # "google/gemma-3-1b-it": 26,
-        # "google/gemma-3-4b-it": 34,
-        # "google/gemma-3-12b-it": 48,
+        # ============================================================
+        # Gemma 3
+        # ============================================================
+        "google/gemma-3-1b-it": 26,
+        "google/gemma-3-4b-it": 34,
+        "google/gemma-3-12b-it": 48,
 
-        # # ============================================================
-        # # DeepSeek R1 Distill
-        # # ============================================================
-        # "deepseek-ai/DeepSeek-R1-Distill-Qwen-1.5B": 28,
-        # "deepseek-ai/DeepSeek-R1-Distill-Qwen-7B": 28,
-        # "deepseek-ai/DeepSeek-R1-Distill-Qwen-14B": 48,
+        # ============================================================
+        # DeepSeek R1 Distill
+        # ============================================================
+        "deepseek-ai/DeepSeek-R1-Distill-Qwen-1.5B": 28,
+        "deepseek-ai/DeepSeek-R1-Distill-Qwen-7B": 28,
+        "deepseek-ai/DeepSeek-R1-Distill-Qwen-14B": 48,
 
-        # # ============================================================
-        # # BLOOM
-        # # ============================================================
-        # "bigscience/bloom-560m": 24,
-        # "bigscience/bloom-1b1": 24,
-        # "bigscience/bloom-3b": 30,
-        # "bigscience/bloom-7b1": 30,
+        # ============================================================
+        # BLOOM
+        # ============================================================
+        "bigscience/bloom-560m": 24,
+        "bigscience/bloom-1b1": 24,
+        "bigscience/bloom-3b": 30,
+        "bigscience/bloom-7b1": 30,
 
-        # # ============================================================
-        # # Lightweight / fast
-        # # ============================================================
-        # "sentence-transformers/all-MiniLM-L6-v2": 6,
-        # "sentence-transformers/all-MiniLM-L12-v2": 12,
+        # ============================================================
+        # Lightweight / fast
+        # ============================================================
+        "sentence-transformers/all-MiniLM-L6-v2": 6,
+        "sentence-transformers/all-MiniLM-L12-v2": 12,
 
-        # # ============================================================
-        # # MPNet
-        # # ============================================================
-        # "sentence-transformers/all-mpnet-base-v2": 12,
-        # "sentence-transformers/all-mpnet-base-v1": 12,
+        # ============================================================
+        # MPNet
+        # ============================================================
+        "sentence-transformers/all-mpnet-base-v2": 12,
+        "sentence-transformers/all-mpnet-base-v1": 12,
     }
 
     models = []
