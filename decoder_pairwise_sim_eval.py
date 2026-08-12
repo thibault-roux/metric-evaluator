@@ -9,7 +9,6 @@ import re
 from dataclasses import dataclass
 from typing import Dict, List, Optional, Sequence
 
-import numpy as np
 import torch
 import torch.nn.functional as F
 from tqdm.auto import tqdm
@@ -123,8 +122,9 @@ MODEL_REGISTRY = [
 
 MODEL_REGISTRY = [
     # Qwen3.5 family
-    {"name": "Qwen/Qwen3.5-27B", "family": "qwen3.5", "variant": "base", "size": "27b", "kind": "generic_decoder"},
+    {"name": "Qwen/Qwen3-Embedding-8B", "family": "qwen3", "variant": "embedding", "size": "8b", "kind": "qwen3_embedding"},
 ]
+
 
 
 GENERIC_POOLINGS = ["last_token", "mean", "weighted_mean", "mean_no_last_token", "weighted_mean_no_last_token"]
@@ -544,7 +544,7 @@ def cache_file_path(cache_dir: str, model_spec: Dict, num_layer: int, pooling: s
     sig = cache_signature(model_spec, num_layer, pooling, dataset_hash, args)
     model_dir = safe_slug(model_spec["name"])
     layer_dir = f"layer_{num_layer}"
-    fname = f"{safe_slug(pooling)}__{sig[:12]}.npz"
+    fname = f"{safe_slug(pooling)}__{sig[:12]}.csv"
     return os.path.join(cache_dir, model_dir, layer_dir, fname)
 
 
@@ -552,9 +552,13 @@ def load_cached_pooling(path: str, expected_len: int) -> Optional[Dict[str, List
     if not os.path.exists(path):
         return None
     try:
-        data = np.load(path)
-        sim_a = data["simA"].tolist()
-        sim_b = data["simB"].tolist()
+        sim_a: List[float] = []
+        sim_b: List[float] = []
+        with open(path, "r", newline="", encoding="utf8") as f:
+            reader = csv.DictReader(f)
+            for row in reader:
+                sim_a.append(float(row["sim_ref_hypA"]))
+                sim_b.append(float(row["sim_ref_hypB"]))
         if len(sim_a) != expected_len or len(sim_b) != expected_len:
             logging.warning("Cache size mismatch at %s, ignoring cache.", path)
             return None
@@ -567,11 +571,11 @@ def load_cached_pooling(path: str, expected_len: int) -> Optional[Dict[str, List
 def save_cached_pooling(path: str, sim_a: Sequence[float], sim_b: Sequence[float]) -> None:
     ensure_parent_dir(path)
     tmp_path = path + ".tmp"
-    np.savez_compressed(
-        tmp_path,
-        simA=np.asarray(sim_a, dtype=np.float32),
-        simB=np.asarray(sim_b, dtype=np.float32),
-    )
+    with open(tmp_path, "w", newline="", encoding="utf8") as f:
+        writer = csv.DictWriter(f, fieldnames=["item_idx", "sim_ref_hypA", "sim_ref_hypB"])
+        writer.writeheader()
+        for idx, (s_a, s_b) in enumerate(zip(sim_a, sim_b)):
+            writer.writerow({"item_idx": idx, "sim_ref_hypA": s_a, "sim_ref_hypB": s_b})
     os.replace(tmp_path, path)
 
 
