@@ -130,6 +130,9 @@ def evaluator(sims, dataset, certitude=0.3, verbose=True):
         else:
             ignored += 1
     print()
+    if correct + incorrect == 0:
+        print("No items met the certitude threshold; nothing to score.")
+        return None
     print("ratio correct:", correct / (correct + incorrect) * 100)
     print("ratio ignored:", ignored / (ignored + accepted) * 100)
     return correct / (correct + incorrect) * 100
@@ -153,10 +156,14 @@ def main(model_name, num_layers=None):
         # y_score = evaluator(sims, dataset, certitude=cert_Y)
         # z_score = evaluator(sims, dataset, certitude=cert_Z)
 
+        if x_score is None:
+            print(f"Skipping write for {model_name} (num_layers={num_layers}): no items met certitude={cert_X}.")
+            return
+
         # with open("out/results_bertscore.txt", "a", encoding="utf8") as file:
         #     file.write(f"{model_name}\t{num_layers}\t{x_score:.2f}\t{y_score:.2f}\t{z_score:.2f}\n")
 
-        with open("out/results_bertscore2.txt", "a", encoding="utf8") as file:
+        with open("out/results_bertscore_en.txt", "a", encoding="utf8") as file:
             file.write(f"{model_name}\t{num_layers}\t{x_score:.2f}\n")
     except AssertionError:
         print(f"Error evaluating {model_name} with num_layers={num_layers}. Skipping.")
@@ -169,7 +176,6 @@ if __name__ == '__main__':
         # Qwen 3
         # ============================================================
         "Qwen/Qwen3-0.6B": 28,
-        
         # "Qwen/Qwen3-1.7B": 28,
         # "Qwen/Qwen3-4B": 36,
         # "Qwen/Qwen3-8B": 36,
